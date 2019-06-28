@@ -1,0 +1,4 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	message	typingTime	sender	timeFromRoundStart	eventType	messageType	uttClass
+0	fish_whiskers	development	5601-39d349cf-1131-4a57-a01b-90b1b7ba8429	1554919188986	listener	fish-whiskers_present	fish-fangs_present-false	fish-body_color-white	It's orange with a whisker	4901	speaker	11721	chatMessage		
+1	fish_white_bodies_orange_stripes_or_fangs	development	5601-39d349cf-1131-4a57-a01b-90b1b7ba8429	1554919205666	listener	fish-stripes_color-orange	fish-body_color-purple	fish-stripes_color-orange	Full orange no stripe	5440	speaker	7383	chatMessage		
+2	trees_purple_trunks_or_white_leaves_orange_berries	development	5601-39d349cf-1131-4a57-a01b-90b1b7ba8429	1554919219386	listener	tree-trunk_color-purple	tree-berries_color-purple	tree-berries_present-false	Green	1440	speaker	3253	chatMessage		

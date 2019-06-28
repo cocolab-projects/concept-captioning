@@ -1,0 +1,10 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	trees_purple_berries	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554914992959	listener	tree-berries_color-purple	tree-trunk_color-purple	tree-trunk_color-white	target	30790	clickedObj
+1	flowers_orange_stems_or_thorns	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915020938	listener	flower-thorns_present	flower-petals_color-orange	flower-center_color-white	target	24899	clickedObj
+2	birds_tails	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915058821	listener	bird-tail_present	bird-crest_tail_color-orange	bird-crest_tail_color-white	distr1	34791	clickedObj
+3	flowers_purple_stems_or_thorns_white_centers	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915091244	listener	flower-center_color-white	flower-petals_color-orange	flower-petals_color-white	target	29334	clickedObj
+4	flowers_orange_petals_purple_centers	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915120790	listener	flower-petals_color-orange	flower-petals_color-white	flower-petals_color-orange	target	26465	clickedObj
+5	flowers_purple_centers_or_orange_stems_with_thorns	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915150660	listener	flower-center_color-purple	flower-center_color-purple	flower-stem_color-orange	target	26776	clickedObj
+6	birds_purple_wings_white_crests_or_white_tails	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915192553	listener	bird-bird_wing_color-purple	bird-bird_wing_color-white	bird-crest_tail_color-white	target	38787	clickedObj
+7	flowers_purple_stems_thorns	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915220309	listener	flower-stem_color-purple	flower-stem_color-purple	flower-petals_color-purple	target	24655	clickedObj
+8	trees_purple_berries_or_white_trunks	development	7358-3d41165b-5b34-4daf-bd4c-c6e7458df339	1554915235651	listener	tree-trunk_color-white	tree-leaves_color-white	tree-leaves_present-false	target	12258	clickedObj

@@ -1,0 +1,366 @@
+gameid	rule_idx	messageType	text
+0102-9fdec9b0-0925-4b5a-b35f-3e141d5a504b	3	I	morseth have whiskers
+0102-9fdec9b0-0925-4b5a-b35f-3e141d5a504b	33	I	zorb will have more than one color
+0102-9fdec9b0-0925-4b5a-b35f-3e141d5a504b	43	I	luzak are plants with a purple stem
+0220-2c78c871-f180-4df5-94a7-0a996d91b97a	9	I	Sup dawg.  A morseth doesn't have leaves, but on the branches it has little balls. Tiny, little balls.
+0220-2c78c871-f180-4df5-94a7-0a996d91b97a	19	I	No discernable differences again. Some have the petals, some have spikes, no clue really.
+0220-2c78c871-f180-4df5-94a7-0a996d91b97a	49	I	Can't spot any differences. Some have tails, some don't. Yea, can't figure out the differences.
+0222-d79fb58d-f643-4e89-95e9-bfa9260872ce	7	I	Hi. Morseth have purple tails No others I clicked on were moseth
+0222-d79fb58d-f643-4e89-95e9-bfa9260872ce	17	I	Theones with purple leaves and any color of berries are correct. If they just have purple berries or just purple leaves it's not the target Purple leaves, any color berries, any color tree trunk
+0222-d79fb58d-f643-4e89-95e9-bfa9260872ce	27	I	OKThis one is really hard. Most with colored stems are kwep. Most that have mostly orange are kwep  All purple without any orange is kwep There aren't clear rules that I could see
+0222-d79fb58d-f643-4e89-95e9-bfa9260872ce	37	I	The fish with the big tooth are the target
+0644-87cfbdf5-8503-4610-9dfe-0a62d731c4d2	3	I	"We're looking for Morseths"" which are like fish"""
+0644-87cfbdf5-8503-4610-9dfe-0a62d731c4d2	33	I	Anyway, we're looking for bushes here, but I didn't manage to work out any pattern So that's a bit of an issue
+0648-b678a26f-b204-4a2e-96f7-ee544884124a	7	I	moresths have 4 purple tailfeathers that's all there is
+0648-b678a26f-b204-4a2e-96f7-ee544884124a	17	I	ollers have purple leaves
+0648-b678a26f-b204-4a2e-96f7-ee544884124a	27	I	kweps have three curly doo-dads coming out of them. That's the majority of them. Also the ones with no doo-dads (curly) four thorns and are totally orange. they're really bi and curly coming out of the central mass there should be 3 of them. they're curly some are all orange and have four thorny things going across them
+0648-b678a26f-b204-4a2e-96f7-ee544884124a	37	I	it's nearly impossible to differentiate zorbs from not zorbs. they have no commonalities that I can observe. It's just guesswork.
+0735-7a9a9aa2-1cd9-4aa9-928c-84789ab14b03	3	I	morseths have whiskers. that's what distinguishes them from non-morseths. all other characteristics don't matter
+0735-7a9a9aa2-1cd9-4aa9-928c-84789ab14b03	33	I	okay this one is harder most things were zorbs i  will tell you the only exceptions i saw blue trunk, pink leaves, no berries pink trunk, red leaves, no berries green trunk, no leaves, blue berries blue trunk, white leaves, no berries green trunk, white leaves, no berries white trunk, no leaves, blue berries white trunk, no leaves, orange berries
+0735-7a9a9aa2-1cd9-4aa9-928c-84789ab14b03	43	I	they absolutely need to have a white center. the circular part inside the petals. looks like a flower. they also need to have thorns on the stalk, with one exception
+0838-097d6849-8421-4a15-90fc-374e0a29d5ed	11	I	These are Ollers.  All but 1 had a white stripe on the fin.
+0838-097d6849-8421-4a15-90fc-374e0a29d5ed	21	I	These creatures are Kweps.  One distinction that I could see on most of them is that there is some white color on one part of it.
+0838-097d6849-8421-4a15-90fc-374e0a29d5ed	41	I	these creatures are trees They are called Luzaks Each tree may have a colored trunk and or colored berries up in the tree Not all trees have a colored trunk ot colored berries.
+0882-fa5d9dd5-8f5a-4fd1-9615-e2bee5865951	9	I	Then this test is designed to fail. Lets move on. If it doesn't have leaves click it. 
+0882-fa5d9dd5-8f5a-4fd1-9615-e2bee5865951	19	I	Oilers shares the exact same characteristics as non oilers This one is desigend to fail the only shared characteristic is yellow leaves around the center but non oilers have the same thing. We're F'd no matter what.
+0882-fa5d9dd5-8f5a-4fd1-9615-e2bee5865951	49	I	If it has a yellow wing and tail feathers it's a luzak. Other than that it's all a guessing game. So click the ones that have a yellow wing and tail feathers, nothing else.
+1153-bdad1ce5-9ccc-4636-a098-49b531950ebe	5	I	pick all the ones without wings on top.
+1153-bdad1ce5-9ccc-4636-a098-49b531950ebe	15	I	white body, orange wing, pink tail, no headdress orange body, pink headdress, pink tail orange wing, orange tail, no headdress orange body, white headdress & white tail orange body, orange wing, pink tail pink body, orange wing, orange tail white body, orange headdress, orange tail white body, orange wing, white tail
+1153-bdad1ce5-9ccc-4636-a098-49b531950ebe	35	I	They are almost all zorbs.  Don't pick two all/nearly all white dandelions, nor the bright orange or bright pink centered dandelions.
+1153-bdad1ce5-9ccc-4636-a098-49b531950ebe	45	I	anything with a pink or white body (stripes don't matter) is one it must have long whiskers, too
+1338-82a600af-da9d-46a0-b113-0daeaf59f451	0	I	So anything that has an orange stem is a morseth no matter what the rest of the flower looks like, if it has an orange stem, that's the one we want to click
+1338-82a600af-da9d-46a0-b113-0daeaf59f451	10	I	It's an oller if it has an orange body AND purple stripes. I only saw a few
+1338-82a600af-da9d-46a0-b113-0daeaf59f451	20	I	i don't even know for this one I messed up last time. My daughter distracted me the difference between a kwep and a non kwep is not something I could easily see
+1805-cd5abc0c-c314-4ed8-aa96-1c8609377107	4	I	Be on the lookout for an orange face That's it  Another easy one 
+1805-cd5abc0c-c314-4ed8-aa96-1c8609377107	14	I	This one is trickier They need to have a purple wing AND head feathers. The head feathers color doesn't matter 
+1805-cd5abc0c-c314-4ed8-aa96-1c8609377107	24	I	Kweps have a white base OR purple berries. Both work Another easy one 
+1805-cd5abc0c-c314-4ed8-aa96-1c8609377107	34	I	The zorbs all have an orange center circle
+1805-cd5abc0c-c314-4ed8-aa96-1c8609377107	44	I	They have 3 things beneath them and then itdr have a hair coming down from the mouth or have a colored body There's like a hair thing on some of their mouths, they're all valid picks. It's also a valid pick if it has the 3 things cing down as long as they also have a colored body It's tough to explain 
+1901-68c15c16-35f5-4ab2-890b-c7588d43110b	3	I	Morseth's have long whiskers coming out of their faces.
+1901-68c15c16-35f5-4ab2-890b-c7588d43110b	33	I	This one it's better to tell you what isn't a zorb. The ones that aren't are stunted trees that have either leaves or berries on them. If you have to guess, it probably is a zorb.
+1901-68c15c16-35f5-4ab2-890b-c7588d43110b	43	I	I've got be honest, I'm not seeing a lot of patterns in this one. Luzak's look like a flower.
+1954-b9ee3177-2947-4302-8409-8632326b2830	7	I	all Morseths have purple feather TAILs it doesn't matter if they have feathers or no feathers anywhere else
+1954-b9ee3177-2947-4302-8409-8632326b2830	17	I	Hi - Ollers are all purple - with at least another color on them Purple leaves the base color doesn't matter
+1954-b9ee3177-2947-4302-8409-8632326b2830	27	I	Kweps are hard to identify but most have spike things growing out of their stems all have at least one color - orange or purple or both not completely white. 
+1954-b9ee3177-2947-4302-8409-8632326b2830	37	I	Hi!  Zorbs mostly all have whiskers but not all do
+2144-b256dace-14e6-4532-a330-1a1d6dd682c4	22	I	all of the NON Kwep had colored wings only. (not white)   so kweps had colored wings and I would mark all white wings as kewps.
+2144-b256dace-14e6-4532-a330-1a1d6dd682c4	32	I	Very few zorbs, all had white leaves.
+2144-b256dace-14e6-4532-a330-1a1d6dd682c4	42	I	ALL of the luzaks had thorns. The non-luzaks: about half of them had thorns and the other half did not have thorns.
+2266-cbab2734-86eb-40f9-8da3-8bc86efa29f4	0	I	the only thing that matters here is if the stem is orange. If the stem is orange select it.
+2266-cbab2734-86eb-40f9-8da3-8bc86efa29f4	10	I	select all the ones with an orange body and purple stripes.
+2266-cbab2734-86eb-40f9-8da3-8bc86efa29f4	20	I	I think the most important is the wings that look like a butterfly are kweps
+2266-cbab2734-86eb-40f9-8da3-8bc86efa29f4	30	I	This one was hard. Most were not zorb. The only thing I found similar between them were that their body and head were the same color.
+2340-873c7f2d-0469-4617-8313-3c110379ffb2	5	I	This one is really easy. If it has wings, it's not a morseth If it just has the crawly legs, it's a morseth Color doesn't matter, antenea don't matter Select all the ones with no wings
+2340-873c7f2d-0469-4617-8313-3c110379ffb2	35	I	It's really complex. There are a lot of different aspects. They're flowers. If it has an orange stem, it's a zorb There are also thorns, dots/solid, vines, etc. that I'm sure all affect things too but I didn't want to spend that much time figuring it out
+2340-873c7f2d-0469-4617-8313-3c110379ffb2	45	I	This one was really hard I'm not entirely positive but I'm pretty confident They're fish, either orange, purple, or white. Stripes or no stripes. They have a side fin and a top fin. Fangs and/or whiskers The fish must have whiskers. Fangs is irrelavant You might want to write this down, it's very specific If the body of the fish is orange, then ONLY white stripes with whiskers are correct If the body of the fish is white, then ONLY orange stripes with whiskers is correct Any color, no stripes, is okay as long as it has whiskers If the body of the fish is purple, then the stripes can be purple, orange, or white, it doesn't matter, it just still needs whiskers The color of the fins don't amtter matter
+2366-b0fb57b3-a37d-485d-927d-0fcf927554c0	22	I	We need to find kwep. It is a bird  But again I am unable to find any distingusing features
+2366-b0fb57b3-a37d-485d-927d-0fcf927554c0	32	I	zorb is a tree  It has white leaves on them 
+2366-b0fb57b3-a37d-485d-927d-0fcf927554c0	42	I	Luzak is a kind of a flower  But they do not have any distinguising characteristics  
+2554-b8e3398e-99f7-492d-890c-70d410930be2	3	I	All morseth have long whiskers. Color and pattern doesnt' matter.
+2554-b8e3398e-99f7-492d-890c-70d410930be2	33	I	zorbs have apples AND leaves
+2554-b8e3398e-99f7-492d-890c-70d410930be2	43	I	So a lot of these have the thorns at on the stem of the flower some however are just a simple stem and flower
+2567-fb408d76-ca14-47ee-9948-4106e3a70b40	16	I	"any flower with an orange stem or vase"""" orange only "
+2567-fb408d76-ca14-47ee-9948-4106e3a70b40	26	I	any flower with needles is a kwep, also any flower with purple petals is also a kwep purple petals only  so all flowers with needles, and all flowers with purple petals only
+2567-fb408d76-ca14-47ee-9948-4106e3a70b40	36	I	any fish with 3 whiskers or 3 whisers with the whisker/barb on the lip is a zorb
+2567-fb408d76-ca14-47ee-9948-4106e3a70b40	46	I	all bugs with a purple body are luzaks, purple body only not purple legs purple head, wings or antenna purple body only 
+2603-f3371eba-abc4-4624-8f52-1efa06971f09	11	I	Okay, this one seemed more coherent. Here's what I found. Ollers are fish that look like catfish. Some have stripes, some do not. When they have white stripes (not colored stripes), they always an oller, except when the white-striped fish lacks a fang and whiskers, or only has one of those two things.  No stripes = no autoatically
+2603-f3371eba-abc4-4624-8f52-1efa06971f09	21	I	Sorry about that last one. Not a ton of consistencies here either. They're kind of bug-looking things. Lots of the ones with purple wings were whatever the species is. Also, ones with white legs and no wings also counted.
+2603-f3371eba-abc4-4624-8f52-1efa06971f09	41	I	"Hi there, it would appear that everything that has white leaves"" is a luzak."""
+2674-c85c4abd-8895-43d3-a70e-5413c4e17e2c	7	I	Morseths have purple tails.
+2674-c85c4abd-8895-43d3-a70e-5413c4e17e2c	27	I	Kweps are usually orange with white arms They usually have three arms or three thorns
+2674-c85c4abd-8895-43d3-a70e-5413c4e17e2c	37	I	Zorbs usually have whiskers. What else can you tell me? They are usually orange with stripes
+2696-91598059-fd51-4c5b-a05d-4e1a231ea54e	8	I	if the little dots are purple it's a morseth, i guess you could call them berries idk light purple dots
+2696-91598059-fd51-4c5b-a05d-4e1a231ea54e	38	I	Zorbs are the ones with the two orange wings
+2732-415d4bbe-f48b-44ec-a14f-30d36472233d	0	I	just all orange and thorns anything with just pink is NOT
+2732-415d4bbe-f48b-44ec-a14f-30d36472233d	10	I	only the orange fish with pink stripes
+2732-415d4bbe-f48b-44ec-a14f-30d36472233d	20	I	The kweep has wings and if its colored tentacles and legs
+2732-415d4bbe-f48b-44ec-a14f-30d36472233d	30	I	any animal with white tail feathers
+2754-860ba9cb-4617-417e-9c4f-98adb44da423	4	I	I honestly have no idea what makes the morseth different... Some had three colors, some had 2.  Some had antennae and some did not.  Some had 6 legs, some had 8...
+2754-860ba9cb-4617-417e-9c4f-98adb44da423	14	I	They always have a mane.
+2754-860ba9cb-4617-417e-9c4f-98adb44da423	24	I	They don't have berries on the branches.
+2754-860ba9cb-4617-417e-9c4f-98adb44da423	34	I	Most of them have the whirly stems.  A very select few don't.  No other patterns.
+2754-860ba9cb-4617-417e-9c4f-98adb44da423	44	I	They always have whiskers.  That's the only discernable trait.
+3027-bf78bd29-679a-475a-b0c0-1ca9149a31dc	3	I	They have three long whiskers
+3027-bf78bd29-679a-475a-b0c0-1ca9149a31dc	33	I	They either have three different colors or are all the same color - white is a color
+3027-bf78bd29-679a-475a-b0c0-1ca9149a31dc	43	I	They usually have a purple stem and light purple petals 
+3074-49613d2a-ce35-44f7-b6c9-f40cf4e7b8c4	5	I	Hello. The species has 12 legs. The species does not have any wings. That's all I noticed.
+3074-49613d2a-ce35-44f7-b6c9-f40cf4e7b8c4	15	I	Looks like a bird. Can have 2 different colors and a tail. Can have 2 different colors with a tail and feathers on head.
+3074-49613d2a-ce35-44f7-b6c9-f40cf4e7b8c4	35	I	Looks like a flower. It can either be just the stem and flower. Or a stem, flower, and 7 thorns. Or stem, flower, 7 thorns, and 3 extensions coming out of the flower. 
+3074-49613d2a-ce35-44f7-b6c9-f40cf4e7b8c4	45	I	Looks like a fish. This is a lot.  Those that have only whiskers and are one solid color is part of the species. Those that have whiskers, one color for the body, one color for fins. Those that have whiskers, stripes, one color for body+stripes, and one color for fins. Those that have whiskers, stripes, one color for body, one color for fins+stripes. Those that have whiskers, a long tooth, stripes, one color for the body (including stripes) and one color for the fins belong to the species. Those that have whiskers, a long tooth, stripes, one color (including stripes and fins) belong to the species. Those that have whiskers, long tooth, one color for body and one color for fins are part of the species. Those with whiskers, long tooth, stripes, one color for stripes, one color for body+fins are part of species. Those that have whiskers, long tooth, stripes, one color each for body, fins, stripes. 
+3292-849c8108-f161-4d50-9c85-6f1d4be1f645	8	I	so these looks like little trees and the ones we click on are the ones with little purple berries in the trees regardless of everything else, the correct ones have little berries (they look like two little circles next to each other) in the trees all the trees have berries, but we click on the ones with the purple berries
+3292-849c8108-f161-4d50-9c85-6f1d4be1f645	38	I	Hi! I think that zorbs either have the larger orange wings or that they have purple legs
+3421-d5e7a1c9-5535-439f-acec-fa522a1d5bad	26	I	Kweps have several traits.  most have spikes on stem of flower:4 on left and 3 on the right some kweps do not have spikes but they have all purple petals, they may have white dots on petal but the base of petal is purple The kweps without spikes have purple petals. They may or may not have white dots. All the other kweps with spikes vary in petal leaf color. If it has spikes on stem it is a kwep.
+3421-d5e7a1c9-5535-439f-acec-fa522a1d5bad	36	I	zorbs are fish with 3 whisker hairs on their bottom face. Color, 
+3421-d5e7a1c9-5535-439f-acec-fa522a1d5bad	46	I	There is a lot of variety.  Here are the traits of creature: look at the middle section head and body white head and purple body, purple head and purple body white head and orange body, orange head and purple body white head and orange body those are the traits to look for. everything else is false
+3433-9fbe1a21-d2df-4898-aa34-ef0d4de19a53	7	I	This one should be easier It always has a tail the head and body (some heads have feathers on top some don't)  are always the same color The tail seems to always be purple and the wing is always a different color then the body (they eyes and beak are always the same color across all species good or bad it seems so you can ignore them)
+3433-9fbe1a21-d2df-4898-aa34-ef0d4de19a53	17	I	hey I think I got this one All of them have purple flowers (twirly things up top) with berries the base (stem color didn't seem to matter) I saw no none species that had purple flower with berries so I think that's the key to this one.
+3433-9fbe1a21-d2df-4898-aa34-ef0d4de19a53	27	I	so one of the properties of the Kweep is a flower with thorns and no arms another version is a flower with the 3 curly arms but I'm having figuring out exactly what disquishs them I think with the armed one its the stalk is a different color then the flower and the arm color can be either the color of the flower or stalk
+3433-9fbe1a21-d2df-4898-aa34-ef0d4de19a53	37	I	o.k. this one is harder. So here is a thing all NON zorbs didn't have tusks but there where a couple zorbs without tusks (very few) and those seemed to have 3  different colors if they didn't have wiskers if they had wiskers they looked like a clown fish I believe that all zorbs had at least 2 differnt colors (top fin and body) many had a clown fish pattern which let it have up to 3 colors other then the rare outlier though all non zorbs didn't have tusks
+3508-58b217d4-09b8-426f-89b2-a8809eb858f3	3	I	select all with moustache
+3508-58b217d4-09b8-426f-89b2-a8809eb858f3	33	I	To be frank, select everything no means to draw a distinction
+3508-58b217d4-09b8-426f-89b2-a8809eb858f3	43	I	Select every creature with the same color thorn as the beads in the leaf
+3512-9958eeb0-bc76-436b-a94f-15e30b9ef1be	11	I	ollers are the ones with WHITE STRIPES and LONG MUSTACHES :) 
+3512-9958eeb0-bc76-436b-a94f-15e30b9ef1be	41	I	ok this one is easy - Luzak's are the trees with white leaves ! ;)
+3647-b5ca5d33-f130-48c2-aa77-0644809027ef	5	I	Last creature is the Morseth. It's main defining feature is that it is wingless. 100% of the ones I was shown were wingless
+3647-b5ca5d33-f130-48c2-aa77-0644809027ef	15	I	The main two aspects by which we can distinguish them are: Orange wing and a tail The Oller always has an orange wing
+3647-b5ca5d33-f130-48c2-aa77-0644809027ef	35	I	The species we are hunting for now is a flower, the Zorb Ok, a flower.   It seems to be very common, about 75% of what I clicked on was a Zorb
+3647-b5ca5d33-f130-48c2-aa77-0644809027ef	45	I	This one is tougher, the main attribute of the species is whisker. Every Luzak has whiskers. Unfortunately, that's their main attribute that I could distinguish
+3771-7fab58ff-8c75-4d77-8aa8-88ee52b3f02b	22	I	so with this make sure that it has one feather below the beck( mouth area)  that is white like it can be full of color every where else, but one must be white or clear*
+3771-7fab58ff-8c75-4d77-8aa8-88ee52b3f02b	32	I	this one has white pedals connectd to the leaves there can be many colors inside, but there also have to be white one at least one white petal on the leaf, but can be colorful inside. Got it 
+3771-7fab58ff-8c75-4d77-8aa8-88ee52b3f02b	42	I	but i think the middle pointy parts are mostly orange or clear of color its like spikes coming out of the vine and they should have some color to them
+4063-8be7e2fe-fb21-4b46-93c3-95c1710e3ff2	7	I	like a bird owl
+4063-8be7e2fe-fb21-4b46-93c3-95c1710e3ff2	37	I	that species looks like a fish have mustache
+4230-fda03076-53a6-4db6-817e-ac9de1d93a62	9	I	Ok, morseths don't have any leaves at all. They can have little round berries on them but no leaves. They look much more bare than many other tree looking species.
+4230-fda03076-53a6-4db6-817e-ac9de1d93a62	19	I	Boy, this one's hard. Ok, the only thing I coud see to what an oller is, they have purple middles and the petals around the purple were different colors. It can have thorns and long growths, just make suer the middle of the flower looking thing is purple and the petals have to be another color The petals cannot be purple
+4230-fda03076-53a6-4db6-817e-ac9de1d93a62	49	I	Unfortunately, the only thing I could distingush what a luzak is is that they all had long ruffle tails. But some that were not also did
+4425-a3abb5f0-7f59-4223-83cb-3e9df1acc2c0	9	I	Morseths are the one with curly skinny branches and no leavee from what ive learned Sitll kinda of confusing
+4425-a3abb5f0-7f59-4223-83cb-3e9df1acc2c0	19	I	Ollers look the same as all the others to be honest with you they probably did that on purpose the only specifics is they have specific colors combined with specific parts but they all have similar parts and i cannot tell u the exact colors they are impossible unlike the other tests to tell which is different
+4425-a3abb5f0-7f59-4223-83cb-3e9df1acc2c0	49	I	So luzaks come in alot of shapes and forms orange body, black eyes, yellow nose orange body yellow nose white hair black eyes yellow tail they differentiate between the others because they usually always have a tail
+4463-cba53c47-956e-4b4d-9c3b-3cc4c7bd1a89	4	I	MORSETH
+4463-cba53c47-956e-4b4d-9c3b-3cc4c7bd1a89	14	I	IT IS IN VIOLET COLOR
+4463-cba53c47-956e-4b4d-9c3b-3cc4c7bd1a89	24	I	IT IS IN BLACK COLOR
+4463-cba53c47-956e-4b4d-9c3b-3cc4c7bd1a89	34	I	IT IS IN RAINBOW COLOR
+4463-cba53c47-956e-4b4d-9c3b-3cc4c7bd1a89	44	I	ZIHRA
+4465-38283aa3-2833-4e56-9ab8-2ebc90d940f4	7	I	The morseth has to have purple tail feathers
+4465-38283aa3-2833-4e56-9ab8-2ebc90d940f4	17	I	has to have purple leaves, unless it's all purple with no berries
+4465-38283aa3-2833-4e56-9ab8-2ebc90d940f4	27	I	So all creatures that have thorns are kewps. Kweps can also have no thorns if they have an orange stalk.
+4465-38283aa3-2833-4e56-9ab8-2ebc90d940f4	37	I	this was easier. they all have fangs
+4614-ed69d903-0061-43b8-83d8-01d5bd9e72a5	9	I	morseths do not have leaves.  sometimes they have berries, sometimes they do not.
+4614-ed69d903-0061-43b8-83d8-01d5bd9e72a5	19	I	All ollers seem to be orange flowers with purple centers.
+4614-ed69d903-0061-43b8-83d8-01d5bd9e72a5	49	I	all luzaks have feathers. colors vary
+4779-6aa1cd86-862c-479a-87c8-4cff5a50536a	4	I	Every bug with an orange head is a morseth
+4779-6aa1cd86-862c-479a-87c8-4cff5a50536a	14	I	An oller has a purple wing and a crest of feathers around the head. No other coloration matters, and tail feathers don't matter.
+4779-6aa1cd86-862c-479a-87c8-4cff5a50536a	24	I	Most kweps have white or pink trunks. they may have leaves, berrys, both, or neither some have light blue trunks if the leaves are white or orange. There were a few with other colors for their trunks, but I didn't see a clear pattern
+4779-6aa1cd86-862c-479a-87c8-4cff5a50536a	34	I	A zorb is a flower with the center circle being orange. Some other zorbs exist, but with an unclear pattern I would choose every flower with an orange center circle.
+4779-6aa1cd86-862c-479a-87c8-4cff5a50536a	44	I	Luzaks have three long wiskers, always They usually have a long tooth as well, the only exception seems to be if they are orange, they may not have a long tooth.
+4796-57353b9e-0950-43b6-980c-6fefff977486	0	I	The flowers we are looking for have orange stems. There are a lot of other properties that the flowers have, but as long as the stems are orange, they're what we're looking for.
+4796-57353b9e-0950-43b6-980c-6fefff977486	10	I	Hi! We are looking for fish that are orange with purple stripes. No other characteristics seem to matter.
+4796-57353b9e-0950-43b6-980c-6fefff977486	20	I	There are two criteria for belonging to the species. First, if it has wings, no matter the color of anything, it belongs. If it doesn't have wings, but the antenna are orange, it belongs.
+4796-57353b9e-0950-43b6-980c-6fefff977486	30	I	The birds that are part of the species have white feathers on their back. The feathers on their head doesn't matter, nor does anything else.
+4850-aa693cee-b35a-47f2-8e3c-ba892ea0ab26	3	I	The main distinguishing feature of the morseth is that it has three very long whiskers extending off its cheek
+4850-aa693cee-b35a-47f2-8e3c-ba892ea0ab26	33	I	Ok, so I can't see any consistent pattern in the zorbs most of the plants are zorbs, there were only 4 out of the whole bunch of like 25 that were not
+4859-7a0be6e0-a366-4f37-9769-088ac84ffad4	7	I	So what I've found is that Morseth have purple tails. No other feature matters.
+4859-7a0be6e0-a366-4f37-9769-088ac84ffad4	17	I	If it has purple flowers on it, but ISN'T completely purple, then it's the right species. Doesn't count if the base is purple, only the flowers.
+4859-7a0be6e0-a366-4f37-9769-088ac84ffad4	27	I	I THINK I got this one figured out.  If it has spikes on the stem/base, it's a kwep. If it DOESN'T have spikes, then the stem/base must be orange. Otherwise, it's not a kwep. So spikes or orange base = kwep. Anything else is a no go. Hope I have that right.
+4859-7a0be6e0-a366-4f37-9769-088ac84ffad4	37	I	"If it has the fang"" looking thing on it's mouth OR small yellow stripes, it is a zorb."" Anything else is not."
+4900-d645ea60-553c-4d7b-9a66-410b015eb8d8	22	I	So this one I'm not that sure about This species is called a kwep you can mark all fully white birds and any of them with two colors some of them can have three but I'm not sure what makes them kweps exactly
+4900-d645ea60-553c-4d7b-9a66-410b015eb8d8	32	I	Hey so this one is a bunch of trees I'm not 100% sure on this one either but it looks like most of them have white leaves so that might just be the best way
+4900-d645ea60-553c-4d7b-9a66-410b015eb8d8	42	I	Okay this one I don't know again but choose all of them with spines they will be flowers some of them will have thorns choose the ones with thorns
+4924-577bd352-ecb7-4705-9687-1aefeedb6b64	7	I	Hi!  They all have purple tailfeathers.
+4924-577bd352-ecb7-4705-9687-1aefeedb6b64	17	I	Hi!  All ollers have both purple leaves and berries.
+4924-577bd352-ecb7-4705-9687-1aefeedb6b64	27	I	Hi there!  Looks like kweps tend to have thorns.
+4924-577bd352-ecb7-4705-9687-1aefeedb6b64	37	I	Hi!  Most zorbs have purple bodies.
+4987-1df364dc-9556-4343-b0bb-ffb586270944	11	I	they have to have three whiskers AND white stripes
+4987-1df364dc-9556-4343-b0bb-ffb586270944	21	I	mostly colored in, not many white spaces
+4987-1df364dc-9556-4343-b0bb-ffb586270944	41	I	just the trunk is colored in, or the trunk and berries are colored in and the leaves are empty
+5085-01f01776-b15d-4363-8025-63679592b459	0	I	pick all the flowers with the orange stems, ignore all other features
+5085-01f01776-b15d-4363-8025-63679592b459	10	I	the oller is always orange with a purple stripe
+5085-01f01776-b15d-4363-8025-63679592b459	20	I	a kwep has attena
+5085-01f01776-b15d-4363-8025-63679592b459	30	I	pick the birds with white tail feathers, ignore all other features
+5228-fbcd860b-2d70-4afc-b3c8-fd597fa35aca	7	I	The morseth must have purple tail feathers. Nothing else matters.
+5228-fbcd860b-2d70-4afc-b3c8-fd597fa35aca	17	I	"This one was much easier to decipher. They must have violet(light purple) leaves and berries (the berries can be any color including the violet) The stems"" The stems"" do not matter."""
+5228-fbcd860b-2d70-4afc-b3c8-fd597fa35aca	27	I	It appears as though the kwep means a few different things. It needs to have thorns if it is white or violet, but not if it is orange.
+5228-fbcd860b-2d70-4afc-b3c8-fd597fa35aca	37	I	The zorb must have a sharp fang except if there are orange stripes. In this case there does not have to be a fang.
+5282-1d9ae0ed-9606-4151-845c-96897fd4d6fc	7	I	morseth have purple tail feathers. It doesn't matter if they have head feathers that are purple... it has to be that their tail feathers are purple.
+5282-1d9ae0ed-9606-4151-845c-96897fd4d6fc	17	I	This one was easy. It has purple leaves and also berries (berries can be any color or blank)
+5282-1d9ae0ed-9606-4151-845c-96897fd4d6fc	27	I	I just can't figure this one out. I spent a long time but there just doesn't seem to be a pattern. 
+5282-1d9ae0ed-9606-4151-845c-96897fd4d6fc	37	I	This is another easy one. zorbs have one long tooth that comes down from their mouth. Nothing else matters.
+5283-27af64ce-1db1-44b8-8a34-7c2d334e55b8	11	I	they are only one color and have stripes
+5283-27af64ce-1db1-44b8-8a34-7c2d334e55b8	21	I	kewps have purple wings
+5283-27af64ce-1db1-44b8-8a34-7c2d334e55b8	41	I	luzaks have colored berries with white leaves
+5346-4c7326eb-3500-4fda-a49e-ce1a28c5b3e9	4	I	Morseths are insects with wings and antennae. I don't know the pattern to be honest 
+5346-4c7326eb-3500-4fda-a49e-ce1a28c5b3e9	14	I	I honestly could not find a pattern But most of them had lots of feathers on their head and tail
+5346-4c7326eb-3500-4fda-a49e-ce1a28c5b3e9	24	I	They are fully grown trees with dots on the branches No particular color
+5346-4c7326eb-3500-4fda-a49e-ce1a28c5b3e9	34	I	A zorb is a flower with dots in the petals and long swirly things sticking out from the center of the flower
+5346-4c7326eb-3500-4fda-a49e-ce1a28c5b3e9	44	I	They are fishes with both whiskers AND fangs Any color
+5416-ab34d4cf-c24c-445f-99aa-cbbd258f0fbe	11	I	oller look like fish that ALWAYS have 3 whiskers and 3 WHITE stripes on their body and tail (2 on the body and 1 on the tail) that are always white they come in orange, white and purple
+5416-ab34d4cf-c24c-445f-99aa-cbbd258f0fbe	21	I	kweep are generally lavendar, orange, and/or white.  they usually have wings and legs. googly eyes, and antennas  they look like bugs, have wings and many legs
+5416-ab34d4cf-c24c-445f-99aa-cbbd258f0fbe	41	I	luzak are trees with WHITE leaves. the trunk can be any color they may or may not have fruit on them.  the specifically have white leaves that make them distinct from the others
+5417-92f6c08e-a1fd-4f10-a822-28456c8c6e42	16	I	these boys have orange trunks tree trunks that is
+5417-92f6c08e-a1fd-4f10-a822-28456c8c6e42	36	I	go for the long whisker boys
+5417-92f6c08e-a1fd-4f10-a822-28456c8c6e42	46	I	On god I have no idea what makes it that. Let's just advance and get this bread
+5434-fe2d8b82-8da4-4712-a121-f627616a7fe7	38	I	All insects with orange wings are the species. If it has white wings, it has to have a purple antenna, white head, purple legs, and orange body. If no wings, it has to have purple legs, can have no antenna or a white one, and the body varies. If purple wings, it has purple legs, orange antenna, and a white body and head.
+5625-2b81a024-0bf8-4431-ac52-de407fc7972d	0	I	Another really easy one: the morseth will always have an orange stem It doesn't matter what color anything else is
+5625-2b81a024-0bf8-4431-ac52-de407fc7972d	10	I	An oller is an orange fish with pink stripes, absolutely nothing else matters
+5625-2b81a024-0bf8-4431-ac52-de407fc7972d	20	I	Alright so the general rule of thumb with kweps is that if it has wings, it's a kwep There were a few exceptions, but I couldn't tell what the differences were between the wingless kweps and not-kweps. If it has wings though it is 100% a kwep, so very easy
+5625-2b81a024-0bf8-4431-ac52-de407fc7972d	30	I	A zorb is a birdlike creature with demon eyes and an UNCOLORED tail. It doesn't matter what the colors of anything else are It has to have a tail and it has to be uncolored
+5637-aa891749-6381-4fff-8a27-89086635aad3	22	I	anything with no color is ONE ANYTHING WITH ORANGE HEAD FEATHERS and no tail is ONE
+5637-aa891749-6381-4fff-8a27-89086635aad3	32	I	they all have pedals AND FRUIT LESs COLORS the better but not all
+5637-aa891749-6381-4fff-8a27-89086635aad3	42	I	they all had sPIKES on the sTEMS but not all of them though
+5667-5a31297c-52af-4199-8cfe-a246341af5a6	5	I	The moreseth looks kind of like a butterfly
+5667-5a31297c-52af-4199-8cfe-a246341af5a6	15	I	the oller has a tail in most instances
+5667-5a31297c-52af-4199-8cfe-a246341af5a6	35	I	Anything with spikes is a zorb
+5704-e8e559b1-e414-485a-8fa8-9418e852958d	5	I	It has 10 legs
+5704-e8e559b1-e414-485a-8fa8-9418e852958d	15	I	The mutple feathers on the tail all I can see
+5704-e8e559b1-e414-485a-8fa8-9418e852958d	35	I	It looks looks like a flower with like 8 pedals. But there are some whole look exactly alike that werent zorb
+5704-e8e559b1-e414-485a-8fa8-9418e852958d	45	I	It has muiltple whiskers 
+5750-11571e24-47da-46bd-88da-ca3e529c51a8	11	I	So the oller is a fish like creature it has 3 whiskers  can be orange, purple or white it may or may not have a long fang-like tooth and has white stripes 
+5750-11571e24-47da-46bd-88da-ca3e529c51a8	21	I	It has all the features It's butterfly shaped but can or cannot have antennaes May or may not have wings Can be white orange and purple There doesn't seem to be any pattern to it
+5750-11571e24-47da-46bd-88da-ca3e529c51a8	41	I	A Luzak is a plant with white petals. It can be any shape size or color apart from that. That's all
+5784-c5cc8d34-4283-440e-9bef-0dc8795bcaaa	16	I	I think the trunk has to be golden.
+5784-c5cc8d34-4283-440e-9bef-0dc8795bcaaa	26	I	thorns certainly. a purple flower head i think also.
+5784-c5cc8d34-4283-440e-9bef-0dc8795bcaaa	36	I	all that have whiskers are the species. also if they are all orange but with purple stripe they and tooth they are also the creature.
+5784-c5cc8d34-4283-440e-9bef-0dc8795bcaaa	46	I	i feel clueless this time. i thought it was having antenna at first, but no.
+5969-097b50a2-fe24-4f58-9dd7-075741df6fab	8	I	green trunks and purple berries, not sure what else
+5969-097b50a2-fe24-4f58-9dd7-075741df6fab	38	I	orange wings should be clicked
+5980-40159167-6479-420e-bd58-175614766511	11	I	white on the body
+5980-40159167-6479-420e-bd58-175614766511	21	I	can you guess
+5980-40159167-6479-420e-bd58-175614766511	41	I	any idea no color for leaves
+6141-121a7103-056a-4ed8-84dc-b374205ec11a	11	I	An oller must have whiskers, PLUS three white stripes anything else is unacceptable Other colors and features do not matter
+6141-121a7103-056a-4ed8-84dc-b374205ec11a	21	I	Kweps must have wings Sometimes, their legs are orange, sometimes white, and sometimes purple Their wings must have a color that is not white
+6141-121a7103-056a-4ed8-84dc-b374205ec11a	41	I	Luzaks have colorless leaves all the leaves must be colorless. Berries can have color, however Colors of anything else do not matter
+6148-547a9a1c-ec36-4930-b8f9-f5514a379a08	3	I	Easy one Anything with whiskers. Nothing else seemed to matter.
+6148-547a9a1c-ec36-4930-b8f9-f5514a379a08	33	I	Anything with Leafs and Berries is a Zorb. Only plants with yellow trunks seem to always be Zorbs. Yellow trunk-ed Zorbs can have or not have any combination of Leafs and Berries. If it has a Yellow trunk its a Zorb. That is all i have.
+6148-547a9a1c-ec36-4930-b8f9-f5514a379a08	43	I	This one was tough Oof. Color matters. There are Six parts to a potential luzak. Stem, Thorns, Petals, Petal spots, flower middle, and what look like strings that grow from the middle. There are three colors. Orange, White and Purple. There can be any amount of anyof these colors except for 2 if there are only 2 orange pieces it is not a luzak. if there are only 2 purple pieces it is not a luzak. if there are only 2 white pieces it is not a luzak.  Here are my notes There can be less than six parts for a luzak So a stem, petal, and flower middle. may be a luzak dependent on color. When you are ready. That is what I have.
+6414-c3289ce7-efdc-452d-8a79-5ed8e67e5dba	3	I	A morseth is a fish with cat whiskers. Any colors
+6414-c3289ce7-efdc-452d-8a79-5ed8e67e5dba	33	I	A zorb is a fully bloomed tree with small berries on the branches
+6414-c3289ce7-efdc-452d-8a79-5ed8e67e5dba	43	I	A luzak is a flower with dots in the middle of the flower. It has log spiral things extending from the middle of the flower. It has spike on the stem. Also they all have similar shades of color
+6423-b331554a-8b95-438e-92d8-a96b19e8e70d	7	I	I feel secure about this one. All morseths have purple tail feathers.
+6423-b331554a-8b95-438e-92d8-a96b19e8e70d	17	I	I feel like this one is straightforward. If it has purple leaves, and berries of any color, then it is an oller.
+6423-b331554a-8b95-438e-92d8-a96b19e8e70d	27	I	"I am not very sure about this, and I apologize. The one thing that all the kweps did have in common is that the front"" petals on the flower (the 5 petals that are in front of the other 5 petals) are lighter than the ""back"" petals. So if the front petals are lighter, that seems to make it a kwep. Wish I could tell you more"""
+6423-b331554a-8b95-438e-92d8-a96b19e8e70d	37	I	"All fish with a downward-facing fang"" coming out of their mouths appear to be zorbs.  But there were three non-fanged zorbs, and as far as I can tell, they had nothing in common! Sorry that I couldn't be clearer."""
+6438-ba05aa62-1b22-411e-b361-9028304b2fac	7	I	if it has a pink tail it is the morseth (sp?). if it does not have a pink tail, it is not.
+6438-ba05aa62-1b22-411e-b361-9028304b2fac	17	I	it should be one if it has pink leaves the only exception was one with pink leaves, a pink trunk, that had no berries. that was not one.
+6438-ba05aa62-1b22-411e-b361-9028304b2fac	27	I	pick the ones with spikes coming horizonatally directly out of the main stem
+6438-ba05aa62-1b22-411e-b361-9028304b2fac	37	I	seems to be one if it has whiskers, except it does not seems to be one if it has exactly 3 whiskers Okay, so any number of whiskers except 3?
+6463-b02ef099-317a-41fc-b79b-d1f0d6dcd467	4	I	This one seems almost deceptively simple. They all had orange heads, and all of the non creatures did not have orange heads. There didn't appear to be any other similarities
+6463-b02ef099-317a-41fc-b79b-d1f0d6dcd467	14	I	The creature is an Oller I noticed that they all shared a number of features.
+6463-b02ef099-317a-41fc-b79b-d1f0d6dcd467	24	I	"Okay so this one was trickier. I sadly couldn't find a single thing that they shared.  However, I did notice that all of the Kwep"" creatures aside from one had no green coloring. The one that did was all white aside from its leaves. "" Any creatures with ONLY the leaves or berries colored in were also KWEPS There was an all white image, it was a Kwep."
+6463-b02ef099-317a-41fc-b79b-d1f0d6dcd467	34	I	I looked a fair bit, the only big similarity I saw was that every creature with an orange center in the bloom was a zorb. 
+6463-b02ef099-317a-41fc-b79b-d1f0d6dcd467	44	I	I'm not gonna lie, I feel like this one is messing with me. I looked and looked and couldn't see any similarities.  Most of them had long fangs, but so did a lot of the ones that werent Luzaks so... I'm not sure.  All color combos and lack of color seemed to be fair game Some had all their parts colored in and others were all white. I'm honestly not sure where a tie in would be
+6540-9f44bcfa-a464-499b-af02-781d05374b3c	11	I	Ollers can have purple, orange, or white bodies
+6540-9f44bcfa-a464-499b-af02-781d05374b3c	21	I	3 types of kweps purple wings are easiest to find orange wings with white legs then purple bodies with white legs
+6540-9f44bcfa-a464-499b-af02-781d05374b3c	41	I	this is the easiest if the tree has white leaves, its a luzak
+6634-2555646e-f76f-4acb-ad4e-c590c98703df	11	I	The oller has 3 whiskers
+6634-2555646e-f76f-4acb-ad4e-c590c98703df	21	I	This one is impossible, I can't figure it out.  I'm going to click any that have white legs or a white body.  It doesn't make sense.
+6634-2555646e-f76f-4acb-ad4e-c590c98703df	41	I	Another easy one.  Plant with white flowers not flowers...leaves
+6645-2af7fe33-806c-49a6-a044-d78d424176b7	8	I	purple berries is de wae
+6645-2af7fe33-806c-49a6-a044-d78d424176b7	38	I	orange body orange wings orange legs or purple legs/purple antennae or purple legs with orange body and wings 
+6698-dd55dc6c-a8c0-4bd1-8221-29bb1064e928	16	I	Ok so for oller's it is a little more difficult. Ollers have leaves and berrys they can have multiple colors The image is slightly raised compared to non ollers like the bottom of the tree like image is higher on the screen than a non oller
+6698-dd55dc6c-a8c0-4bd1-8221-29bb1064e928	26	I	spikes on stem, and/or purple petals in flower
+6698-dd55dc6c-a8c0-4bd1-8221-29bb1064e928	36	I	they always have 3 long whiskers that hang down
+6698-dd55dc6c-a8c0-4bd1-8221-29bb1064e928	46	I	These creatures are hard to define There was no real pattern for me that was easily definable They had wings and didn't have wings They were all the same color or all different colors
+6706-fb5fd993-075f-4b9e-bb25-4f1cc68fc8ac	16	I	lthere are trees i could not spesific thing
+6706-fb5fd993-075f-4b9e-bb25-4f1cc68fc8ac	36	I	there are a lot of fishes
+6706-fb5fd993-075f-4b9e-bb25-4f1cc68fc8ac	46	I	there are insect
+6781-0b332fca-d71c-4a99-b8ec-14f9dafc4571	16	I	The species in question has an orange stem or trunk. All other species do not have an orange stem or trunk. 
+6781-0b332fca-d71c-4a99-b8ec-14f9dafc4571	26	I	Most all of the correctly identified examples of the species in question had thorns on their stems. Thornless examples were not identified as the correct species unless they had no tendrils and had purple petals. 
+6781-0b332fca-d71c-4a99-b8ec-14f9dafc4571	36	I	All zorbs have three whiskers. All non zorbs do not have three whiskers. 
+6781-0b332fca-d71c-4a99-b8ec-14f9dafc4571	46	I	All the luzaks had purple main bodies or abdomens excluding the head. All non luzaks did not have purple main bodies.
+6904-9b2d32a0-14e4-434a-8e3e-b8d02a9af048	3	I	Color does not matter It cannot be without whiskers It is the creature, as long as it has the whiskers sound clear, anything else I need to know? No
+6904-9b2d32a0-14e4-434a-8e3e-b8d02a9af048	33	I	They normally have a combination of berries and flowers They are normally colorful
+6904-9b2d32a0-14e4-434a-8e3e-b8d02a9af048	43	I	If the stem is orange, the flower and vines are also orange If the stem is purple, it has many white properties If the stem is purple, it doesn't need to have vines The stem is never white That is all
+7249-f3f3c018-1137-4390-861e-a6606da7f247	16	I	The ollers have orange trunks. easy one
+7249-f3f3c018-1137-4390-861e-a6606da7f247	26	I	All of the ones with thorns are kweps.  Of the ones that do not have thorns, the ones with purple flower heads are kweps.
+7249-f3f3c018-1137-4390-861e-a6606da7f247	36	I	All of the ones with whiskers hanging down are zorbs. In addition, there is one kind that does not have whiskers that is a zorb -- it's orange with purple stripes, no whiskers.
+7249-f3f3c018-1137-4390-861e-a6606da7f247	46	I	The luzaks always have a purple body, underneath the wings. Look underneath the wings for the main part of the body. 
+7253-4fae2998-1b73-4ad4-8633-44e06cf38a8f	5	I	they will always have legs but not always have wings. they look like butterflies. 
+7253-4fae2998-1b73-4ad4-8633-44e06cf38a8f	15	I	will have a head full of feather and a tail full of feathers some dont have head feathers but will have tail feathers they will usually have color to them 
+7253-4fae2998-1b73-4ad4-8633-44e06cf38a8f	35	I	they will usually have spirals coming out of them  the flower itself can be white with dots of color  or the flower can be colored
+7253-4fae2998-1b73-4ad4-8633-44e06cf38a8f	45	I	luzaks can be white have whiskers
+7297-6cd9e8b9-29bb-432d-8128-d9dca1b8f01d	9	I	trees with no flowers Purple with any color balls Blue with any color balls No white trees
+7297-6cd9e8b9-29bb-432d-8128-d9dca1b8f01d	19	I	They have a purple dot in the middle of the flower head The petals must be orange A vice versa
+7297-6cd9e8b9-29bb-432d-8128-d9dca1b8f01d	49	I	Luzaks must have tail feathers, those without are not Luzaks. Sometimes they have head feathers. Usually their wing colors match their tail colors. 
+7356-0953dc47-73a8-4cce-9bdc-81ad8cf8d5ec	16	I	so the ollers are all the trees with the goldish trunk(bottom part of the tree) Every single tree with that color trunk is an oller its like a goldish yellow, youll see what I mean
+7356-0953dc47-73a8-4cce-9bdc-81ad8cf8d5ec	26	I	alright for the sake of not taking forever, I really have no idea lol Like 2/3 of them are the ones that qualify though
+7356-0953dc47-73a8-4cce-9bdc-81ad8cf8d5ec	36	I	Ok this one is easy its all of the fish with three long whiskers at the bottom Youll see them, its pretty easy
+7356-0953dc47-73a8-4cce-9bdc-81ad8cf8d5ec	46	I	Yea really not sure about this one either, just pick around 2/3 of them again. Really have no idea which feature seperates the group
+7428-0ee96d24-33b7-4933-81a3-c3d11c92dc5f	46	I	select the butterfly if any part of the body in violet color  don't select orange and white 
+7523-9f35bee6-f3c8-49e7-aecc-f53fdc1e1c4b	3	I	Hi, the morseths all have very long whiskers
+7523-9f35bee6-f3c8-49e7-aecc-f53fdc1e1c4b	33	I	Sorry, I frankly could not understand at all what the pattern was and I didn't want to waste time when I was pretty sure I wasn't going to figure it out Almost like 90% of things I clicked on matched the pattern though, so it might be a good idea to click on almost everything?
+7523-9f35bee6-f3c8-49e7-aecc-f53fdc1e1c4b	43	I	This one is a bit tricky There is a center of the petals, if it is white and the bottom part of the flower that is curving to the left is colored, it is a luzak it's a small circle in the center If the small circle is white, but the bottom petal is white too, it is not a luzak unless there are these small dots on the petals as well, then it is a luzak If this is hard to understand, it might just be better to click on everything with a small white circle in the center frankly
+7691-81a6c91c-659c-4fcb-8373-bbf90614b486	8	I	red trunks, purple trunks, purple balls 
+7691-81a6c91c-659c-4fcb-8373-bbf90614b486	38	I	The majority of the zorb's features are almost completely orange
+7790-7df05fcf-2ff4-4403-8b14-97dc2780edb0	8	I	this specie has the stems in colors , range , purple, green and light blue
+7790-7df05fcf-2ff4-4403-8b14-97dc2780edb0	38	I	this type has colors purple and ornage and not many feathers orange
+7831-9cd89d2d-a78a-4bed-99fa-55dd1e1be4e0	22	I	It looks like a bird Some have wings and tails and others do not some have feathers on their heads, others do not they have legs and feet like a bird
+7831-9cd89d2d-a78a-4bed-99fa-55dd1e1be4e0	32	I	Most of the zorbs were large with lots of leaves. 
+7831-9cd89d2d-a78a-4bed-99fa-55dd1e1be4e0	42	I	I did not see much of a pattern with luzaks.  Some plants were small and some were large Luzaks have a flower like a sunflower they have leaves that are curly que. How do I spell curly cue?
+7908-21266c3d-6d57-4c08-a7dc-485bccddd7fc	22	I	center section is not many of them edges ar
+7908-21266c3d-6d57-4c08-a7dc-485bccddd7fc	32	I	i suspect it is NOT the creature that is the key but its location on the grid.
+7908-21266c3d-6d57-4c08-a7dc-485bccddd7fc	42	I	bottom side like a pyramid triangle
+7929-724fe6a7-bdc0-4149-9d5d-96f8d6281490	11	I	White has to be the stripes. Needs to have long whiskers
+7929-724fe6a7-bdc0-4149-9d5d-96f8d6281490	21	I	"MOST of them have antenna, but not all of them. MOST Of them have 3 things"" on the right hand side, but not all of them."" MOST of them have 5 things"" on the right hand side, but not all of them"" MOST Of them have wings, but not all of them. crapshoot, basically."
+7929-724fe6a7-bdc0-4149-9d5d-96f8d6281490	41	I	none had flowers with colors berries, yes, flowers, no.
+7955-52f34fdb-867c-42dc-8d35-7e05ea228656	9	I	"I think I've got this one. The following species look like trees with trunks and branches. The correct species are the ones in which the branches"" are either bare or have ONLY the small circles. Good luck!"" Colors are irrelevant btw"
+7955-52f34fdb-867c-42dc-8d35-7e05ea228656	19	I	Hello!!! Ollers have any type of orange flower with a purple center. That is the only criteria. 
+7991-e821d0e9-e594-4d32-aafb-acf3caf60da7	5	I	its like a worm and straighten body . both side on like a array of needle.
+7991-e821d0e9-e594-4d32-aafb-acf3caf60da7	15	I	there is a spike on head. spike it not necesary for some picture in which there is wing colored in orange  wing colored orange is mandatory for all case. also spike on tail should be there.
+7991-e821d0e9-e594-4d32-aafb-acf3caf60da7	35	I	the Zorb which contains the length of stem and the stem would be blended little bit. its leaf contains few dots only
+7991-e821d0e9-e594-4d32-aafb-acf3caf60da7	45	I	Luzak must be  like a shark and the bod of fish has same color. example fully orange, blue , white don't chose the one with mixed color on surface of the body.
+8042-2afe5fe8-b5e9-4eb9-b2be-e9a6c01dd5af	16	I	Only the ones with a orange tree trunk
+8042-2afe5fe8-b5e9-4eb9-b2be-e9a6c01dd5af	26	I	Ok they seem to have spike things coming out of the sides and a purple flower, Purple flowers are ok without spike things.  but all spike things are good 
+8042-2afe5fe8-b5e9-4eb9-b2be-e9a6c01dd5af	36	I	They have 3 long whiskers. color does not matter
+8238-403f8254-4ada-417e-96bd-57f94e24e8fb	5	I	most were white, some were orange they're caterpillars go
+8238-403f8254-4ada-417e-96bd-57f94e24e8fb	15	I	i didn't see many bald birds most were orange or purple a lot were white with no hair
+8238-403f8254-4ada-417e-96bd-57f94e24e8fb	35	I	select less, you're selecting too many almost all of the zorbs had spiral things
+8238-403f8254-4ada-417e-96bd-57f94e24e8fb	45	I	all purple with stripes, orange with white trips, purple with white fins and no stripes, purple with orange fins and no stripes, purple with stripes orange fins, purple white strips orange fins white with stripes purple fins, purple no stripes white fins, all white with stripes, orange white stripes white fins, purple white strips and white fins, purple orange stripes and orange fins, orange white stripes purple fins, all purple no stripes, white with stripes orange fins, purple with white stripes and purple fins, all purple with stripes except white fins, all white with stripes
+8290-f0a8d865-235b-45c8-81d2-ef4ab823a760	0	I	Orange stem/trunk are the ones to look for
+8290-f0a8d865-235b-45c8-81d2-ef4ab823a760	10	I	if body is orange and stripes are purple choose it
+8290-f0a8d865-235b-45c8-81d2-ef4ab823a760	20	I	This isn't 100% accurate, but it's as close as I could get to reasonable choices: If it has wings it's a kwep
+8290-f0a8d865-235b-45c8-81d2-ef4ab823a760	30	I	If tail feathers exist and have no color choose it
+8296-1c6c55f7-d576-4bd1-aa3a-91a1465aac8e	11	I	an oller is a fish that has white stripes and hanging whiskers. be careful not to confuse the whiskers with the hanging tooth.
+8296-1c6c55f7-d576-4bd1-aa3a-91a1465aac8e	21	I	i couldn't really figure out any distinguishing features of a kwep
+8296-1c6c55f7-d576-4bd1-aa3a-91a1465aac8e	41	I	luzak seems like a tree with a colored or white trunk with white leaves remember the leaves must be white.
+8308-baa7f050-9990-456d-a630-d3b0f9077966	22	I	another tricky one. The only thing I can see is that all kweps have a white arm. its a bird  don't worry about the head feathers or the tail feathers. as long as the arm is white, it should be a kwep.
+8308-baa7f050-9990-456d-a630-d3b0f9077966	32	I	Zorbs have leaves and berries on them but the leaves have to be white, not colored. if the leaves are colored, it is not a zorb. make sure they have leaves and little circle berries and the leaves are white
+8308-baa7f050-9990-456d-a630-d3b0f9077966	42	I	this one is tricky! they have a few that are Luzaks but don't fit the mold so we probably won't get them all they have to have thorns, and swirlies the flower petals need to be colored two different colors and the polka dots need to be white so they must have thorns, swirlies (you'll see) and polka dots. but the polka dots have to be white and the petals and to be 2 different colors
+8548-a977b870-fdd6-4204-b27c-cb998535be45	0	I	It is a morseth.  It looks like a flower.  The stem must be yellow.  The flower looks like it has two layers.  One on top of each other. Both layers have 6 petals in them.  Color of petals does not matter.
+8548-a977b870-fdd6-4204-b27c-cb998535be45	10	I	An oller is an fish that the body is orange, there is 3 stripes on the body.  All 3 stripes are purple One stripe is on the tail, the next is right after the tail and then third is behind the eye
+8548-a977b870-fdd6-4204-b27c-cb998535be45	20	I	I only see that all of these have wings.  They are a little insect looking thing with legs and they only match if there are wings.   The wings look like a butterfly
+8695-e7008bc5-0475-44f5-b2c2-bd78b5131160	7	I	If the morseth has a purple head feather and purple tail or if it just has a purple tail it is a morseth
+8695-e7008bc5-0475-44f5-b2c2-bd78b5131160	17	I	Most important thing about an oller is the purple leaves with berries
+8695-e7008bc5-0475-44f5-b2c2-bd78b5131160	27	I	Most of all a lot of the kwep have thorns on stems
+8695-e7008bc5-0475-44f5-b2c2-bd78b5131160	37	I	If it has any whiskers it is a zorb no certain color
+8806-69f27838-0d01-4061-8966-5cfc37f244e7	4	I	some have antennas white, orange, and purple. some have butterfly wings with 9 legs. some have 12 legs, no antennas no butterfly wings, purple and white backs with orange heads. some have orange heads orange wings with white legs. some have white wings purple legs, orange head, no antennas some are the same above with antennas
+8806-69f27838-0d01-4061-8966-5cfc37f244e7	14	I	purple all over, 12 feathers on head, arm is purple too, and 5 purple tail feathers 12 white feathers on head, arm is purple, no tail feathers, orange head and body. 12 white feathers on head, purple arm, 5 white tail feathers, white head and body. 12 white feathers on head, purple arm, white head and body no tail feathers. 12 white feathers on head, arm is purple, white tail feathers, orange head and body. purple feathers on head, arm purple, purple tail feathers orange head and body. orange head feathers purple arm no tail feathers white head and body white feathers on head arm is purple no tail feathers orange head and body orange feathers on head purple body no tail feathers arm is purple.
+8806-69f27838-0d01-4061-8966-5cfc37f244e7	24	I	I'm not sure what to say about these.  most of them have 5 stems a few have only 4 blue leaves on a lot of them some have what looks like berries on the leaves
+8806-69f27838-0d01-4061-8966-5cfc37f244e7	34	I	this one is hard some have spikes, some don't. on their stem all of them have dots on the flower most of the flower parts have 3 long swirl stems one has no dots on the flower, no swirl stems and no spikes
+8806-69f27838-0d01-4061-8966-5cfc37f244e7	44	I	The luzak has 3 stripes. A long tooth and three long whiskers
+8848-7fd5cf8e-c532-4998-aa52-e1a5be508203	4	I	They have an orange head.
+8848-7fd5cf8e-c532-4998-aa52-e1a5be508203	14	I	The feather on the bottom right is sharp. and it is colored purple Clarification: From the feathers on its head, the feather on the bottom right is sharp.
+8848-7fd5cf8e-c532-4998-aa52-e1a5be508203	24	I	The correct species is positioned higher than the others.
+8848-7fd5cf8e-c532-4998-aa52-e1a5be508203	34	I	They are positioned higher.
+8848-7fd5cf8e-c532-4998-aa52-e1a5be508203	44	I	Has teeth and whiskers
+8949-6541ef36-0310-4bdd-9d56-569a41c41496	22	I	orange feathers, or orange body, but not both
+8949-6541ef36-0310-4bdd-9d56-569a41c41496	32	I	they must have white leaves
+8949-6541ef36-0310-4bdd-9d56-569a41c41496	42	I	usually has a orange stem
+9013-b60e3358-ca78-4df4-a83e-133b12337b50	16	I	The oller is any tree that has a brown trunk 
+9013-b60e3358-ca78-4df4-a83e-133b12337b50	26	I	"You're determing whether flowers are Kweps"" or not. Every flower that has thorn looking things sticking out of it's stem is a quep. Also, there are a couple that don't have thorns too, but they have purple petals."""
+9013-b60e3358-ca78-4df4-a83e-133b12337b50	36	I	This time, a zorb is considered any fish that has whiskers and also any fish that is orange with purple stripes. 
+9013-b60e3358-ca78-4df4-a83e-133b12337b50	46	I	This round, the luzaks have a purple body. It doesn't matter what color the wings/legs/head are as long as the body is purple
+9079-1f398b8e-722a-4cd8-baf6-ec392ed16110	22	I	Ok, this one has a lot going on. Any bird with brown feathers. If it only has brown feathers around the face, the body cannot be colored in. Any bird where the only color is the beak.  Bird with only pink in the body and no other color. That's all I can recall.
+9079-1f398b8e-722a-4cd8-baf6-ec392ed16110	32	I	Find the ones with leaves that are not colored in (berry and stem color do not matter). I think the one with a pink stem, green leaves, and orange berries count too.
+9079-1f398b8e-722a-4cd8-baf6-ec392ed16110	42	I	Hello. Look for the plant with spikes on the stem and the stem is colored in.
+9156-84532296-bf9e-47a0-af06-9e8ab2f24efb	19	I	They all have a flower(just the center part) which is orange and has a tiny pink center. Everything else such as stem thorns or arms does not matter. 
+9156-84532296-bf9e-47a0-af06-9e8ab2f24efb	49	I	It is a lttle bird. As long as it has tail feathers (any color they just have to be there) and the one little wing that it has has to be orange.
+9206-55db4854-4c7b-4f3b-b91c-89c9d1d4785c	5	I	All you need to know is morthess don't have wings
+9206-55db4854-4c7b-4f3b-b91c-89c9d1d4785c	15	I	If it has tail feathers and an orange wing that's what you are looking for.  It has to have both.  
+9206-55db4854-4c7b-4f3b-b91c-89c9d1d4785c	35	I	Only pattern I noticed is about 90% of the time if something had thorns sticking out of the stem it was a zorb.
+9206-55db4854-4c7b-4f3b-b91c-89c9d1d4785c	45	I	If it has a fang and wiskers it's definitely a luzak.  If it just has wiskers it's probably a luzak but not necessarily.  Anything without wiskers can't be a luzak.
+9211-ba72bfd8-40d4-4bc1-9ff6-5879cb2c1d46	8	I	A lot of rules for this one the correct species might have no leaves on the tree if NO leaves it has a green or red trunk if it has white leaves it must have an ORANGE or RED trunk red leaves must have WHITE trunk blue leaves must have WHITE trunk purple leaves must have PURPLE trunk green leaves must have GREEN or PURPLE trunk that's the end of the rules.
+9211-ba72bfd8-40d4-4bc1-9ff6-5879cb2c1d46	38	I	Hello, the zorb either have orange wings or they have purple feet and NO wings You will be looking for the Zorb species.
+9306-be610f38-596c-4352-a004-0a760f107dea	3	I	I think this one is easy morseth should always have barbels
+9306-be610f38-596c-4352-a004-0a760f107dea	33	I	Zorbs should have flowers AND fruits!
+9306-be610f38-596c-4352-a004-0a760f107dea	43	I	This flower should have a certain combination of white pistil and thorns (or none) I'm not sure about the filaments, at least they're not always present.
+9453-f3f01ca6-76ee-4ead-a25b-1a9bb803d1f4	7	I	These birds will have a yellow beak and a colored tail.  yellow beak, colored tail
+9453-f3f01ca6-76ee-4ead-a25b-1a9bb803d1f4	17	I	Good morning, the species Oller has pink leaves on them.
+9453-f3f01ca6-76ee-4ead-a25b-1a9bb803d1f4	27	I	Kweps mostly have spikes on their stem. They all look like sea plants. There were a few cases where they did not have spikes but it was rare I noticed in the middle of their flower it was colored also
+9453-f3f01ca6-76ee-4ead-a25b-1a9bb803d1f4	37	I	Good job last round. Ok Zorbs have fangs. Big long teeth that you will see on their face Right in front of their mouths, like a vampire.
+9501-2041776c-7f93-4e4a-9122-d367e0964183	8	I	Purple berries were what they all had except one, which had green berries orange leaves and a blue body
+9501-2041776c-7f93-4e4a-9122-d367e0964183	38	I	It almost always has orange wings, unless it has a purple body and legs. And than it can either not have wings or the wings can be a different color
+9775-3f4a876c-b6ca-4849-b9d9-b022de06b711	16	I	Ollers have orange trunks.  That's the only thing that separates them from the others
+9775-3f4a876c-b6ca-4849-b9d9-b022de06b711	26	I	Any flower with thorns is a kwep
+9775-3f4a876c-b6ca-4849-b9d9-b022de06b711	36	I	All fish with whiskers are zorbs.
+9775-3f4a876c-b6ca-4849-b9d9-b022de06b711	46	I	Luzaks consist of at least 2 colors on their body
+9867-abb398da-c2c0-4ae4-8c25-e38dff21e04b	16	I	All of them have an orange trunk. Click every one that has an orange trunk.
+9867-abb398da-c2c0-4ae4-8c25-e38dff21e04b	26	I	From what I can tell, they all have thorns. That is the only thing they have in common that I noticed.
+9867-abb398da-c2c0-4ae4-8c25-e38dff21e04b	36	I	They all have the three long whiskers that hang down. I think that is all they have in common.
+9867-abb398da-c2c0-4ae4-8c25-e38dff21e04b	46	I	From what I can tell, the only thing they all have in common is having purple bodies.
+9934-16676e98-dec0-4087-844a-3de8240f7915	3	I	Yay finally an easy on... if the fish has three long whiskers coming out of their face then it is one.
+9934-16676e98-dec0-4087-844a-3de8240f7915	33	I	Hello. I had a difficult time finding the differences. Pretty much everything was a zorb.
+9934-16676e98-dec0-4087-844a-3de8240f7915	43	I	Hello again. So again it is nearly impossible. If all the parts are colored in it is almost always a luzak. If there are parts that are not colored in, then it may not be.
+9946-7029d2e5-3b46-4eb7-b2d3-33656910b533	0	I	morseth if the creature has an orange stem, it's a morseth.  that's it, nothing else to even look at
+9946-7029d2e5-3b46-4eb7-b2d3-33656910b533	10	I	an oller is a fish with an orange body and purple stripes.  That's it
+9946-7029d2e5-3b46-4eb7-b2d3-33656910b533	20	I	kwebs if the creature has the butterfly back, it's a kweb, irregardless of color anywhere if the creature doesn't have the butterfly back, then it's only a kweb if it has orange antennas off it's head
+9946-7029d2e5-3b46-4eb7-b2d3-33656910b533	30	I	Alright, so zorbs here is what you need to know.  zorbs have white feathers on the bottom of their lower backs.   the only thing to know is this.  never mind any head feathers or even if they have feathers anywhere else.  if they have white feathers coming out their bottom, it;s a zorb

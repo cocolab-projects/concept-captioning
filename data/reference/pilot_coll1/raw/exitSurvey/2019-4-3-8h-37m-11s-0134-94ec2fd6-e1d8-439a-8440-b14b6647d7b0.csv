@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+bugs_purple_legs_white_heads	development	0134-94ec2fd6-e1d8-439a-8440-b14b6647d7b0	1554305831238	listener	82	0134-94ec2fd6-e1d8-439a-8440-b14b6647d7b0	yes	loved	yes	no	pick what was described	listener	984207	exitSurvey
+bugs_purple_legs_white_heads	development	0134-94ec2fd6-e1d8-439a-8440-b14b6647d7b0	1554305858803	listener	82	0134-94ec2fd6-e1d8-439a-8440-b14b6647d7b0	yes	liked	yes	Sometimes two of the three photos were the same,	I described the features unique to the target, 	speaker	1079769	exitSurvey

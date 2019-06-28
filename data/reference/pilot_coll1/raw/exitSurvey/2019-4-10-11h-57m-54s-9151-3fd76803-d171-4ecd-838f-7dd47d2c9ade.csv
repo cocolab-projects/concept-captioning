@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+flowers_purple_centers_or_orange_stems_with_thorns	development	9151-3fd76803-d171-4ecd-838f-7dd47d2c9ade	1554922674559	speaker	90	9151-3fd76803-d171-4ecd-838f-7dd47d2c9ade	yes	loved	yes	Interesting, thanks	I tried to differentiate the images based on appearance as efficiently as possible	speaker	1129078	exitSurvey
+flowers_purple_centers_or_orange_stems_with_thorns	development	9151-3fd76803-d171-4ecd-838f-7dd47d2c9ade	1554922685834	speaker	90	9151-3fd76803-d171-4ecd-838f-7dd47d2c9ade	yes	loved	yes	Excellent partner	I paid attention 	listener	1000220	exitSurvey

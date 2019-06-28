@@ -1,0 +1,14 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	bugs_white_heads_or_orange_antennae_purple_legs	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305505646	speaker	bug-legs_color-purple	bug-antennae_color-orange	bug-antennae_present-true	target	21403	clickedObj
+1	birds_white_crests_or_orange_wings_tails	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305516714	speaker	bird-tail_present	bird-crest_tail_color-orange	bird-crest_tail_color-white	target	7948	clickedObj
+2	fish_orange_bodies_purple_stripes_or_whiskers	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305528031	speaker	fish-stripes_present	fish-body_color-white	fish-stripes_color-purple	target	8228	clickedObj
+3	bugs_wings_antennae	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305545528	speaker	bug-antennae_present	bug-body_color-purple	bug-antennae_present-false	target	14357	clickedObj
+4	trees_white_leaves_or_orange_berries	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305571180	speaker	tree-leaves_color-white	tree-berries_present-false	tree-leaves_present-true	target	22518	clickedObj
+5	fish_whiskers	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305582805	speaker	fish-whiskers_present	fish-stripes_color-purple	fish-body_color-orange	target	8536	clickedObj
+6	trees_purple_leaves_berries	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305597073	speaker	tree-leaves_color-purple	tree-leaves_color-purple	tree-trunk_color-orange	target	11174	clickedObj
+7	trees_without_leaves	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305617249	speaker	tree-leaves_present	tree-leaves_present-false	tree-berries_color-purple	target	17088	clickedObj
+8	bugs_orange_head	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305637472	speaker	bug-head_color-orange	bug-body_color-purple	bug-wings_present-false	target	17016	clickedObj
+9	flowers_purple_centers_or_orange_stems_with_thorns	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305652919	speaker	flower-center_color-purple	flower-stem_color-orange	flower-stem_color-purple	target	12355	clickedObj
+10	birds_purple_tails	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305692392	speaker	bird-crest_tail_color-purple	bird-bird_wing_color-orange	bird-crest_tail_color-purple	target	36355	clickedObj
+11	flowers_purple_stems_white_petals_or_orange_centers	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305723163	speaker	flower-petals_color-white	flower-center_color-white	flower-stem_color-purple	target	27650	clickedObj
+12	flowers_purple_stems_white_petals_or_orange_centers	development	4491-b16d9463-8187-4859-a5c4-1aca721fab72	1554305734111	speaker	flower-center_color-orange	flower-petals_color-orange	flower-petals_color-purple	target	7818	clickedObj

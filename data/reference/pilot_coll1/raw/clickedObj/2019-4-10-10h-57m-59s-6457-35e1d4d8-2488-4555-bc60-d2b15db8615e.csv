@@ -1,0 +1,9 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	birds_purple_tails	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919079857	speaker	bird-crest_tail_color-purple	bird-crest_tail_color-white	bird-bird_wing_color-white	target	292120	clickedObj
+1	trees_leaves_berries_or_orange_trunks	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919157449	speaker	tree-trunk_color-orange	tree-trunk_color-white	tree-leaves_present-true	target	74505	clickedObj
+2	bugs_purple_legs_white_heads	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919281253	speaker	bug-legs_color-purple	bug-bug_wings_color-purple	bug-antennae_color-orange	distr1	120710	clickedObj
+3	flowers_orange_petals_purple_centers	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919381727	speaker	flower-petals_color-orange	flower-petals_color-white	flower-stem_color-orange	target	97391	clickedObj
+4	bugs_wings_antennae	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919426382	speaker	bug-antennae_present	bug-bug_wings_color-orange	bug-head_color-orange	target	41564	clickedObj
+5	bugs_white_legs_purple_wings_or_orange_antennae	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919457761	speaker	bug-bug_wings_color-purple	bug-bug_wings_color-purple	bug-bug_wings_color-orange	target	28263	clickedObj
+6	flowers_orange_stems_or_thorns	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919540498	speaker	flower-thorns_present	flower-petals_color-orange	flower-center_color-orange	target	79648	clickedObj
+7	fish_white_stripes_or_whiskers	development	6457-35e1d4d8-2488-4555-bc60-d2b15db8615e	1554919575733	speaker	fish-stripes_color-white	fish-stripes_color-purple	fish-stripes_color-orange	target	32127	clickedObj

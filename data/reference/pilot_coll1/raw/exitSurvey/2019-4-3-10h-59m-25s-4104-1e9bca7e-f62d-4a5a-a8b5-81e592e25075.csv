@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+bugs_orange_head	development	4104-1e9bca7e-f62d-4a5a-a8b5-81e592e25075	1554314365209	speaker	90	4104-1e9bca7e-f62d-4a5a-a8b5-81e592e25075	yes	not much	yes	No, none,	I just clicked on what was described, 	listener	1510888	exitSurvey
+bugs_orange_head	development	4104-1e9bca7e-f62d-4a5a-a8b5-81e592e25075	1554314394275	speaker	90	4104-1e9bca7e-f62d-4a5a-a8b5-81e592e25075	yes	loved	yes	This was so fun and I could do them all day! LOL	just narrowing it down where there was no way to pick the wrong one,	speaker	1717065	exitSurvey

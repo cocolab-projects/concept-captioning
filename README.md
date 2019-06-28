@@ -1,5 +1,6 @@
 # concept-captioning
-From images to concepts to natural language descriptions
+
+From concepts to language
 
 ## Instructions
 

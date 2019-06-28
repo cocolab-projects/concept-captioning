@@ -1,0 +1,4 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	fish_orange_bodies_purple_stripes_or_whiskers	development	1733-db81f8ab-4092-4fa9-b3e3-9a27f35b27e5	1554918535801	listener	fish-stripes_present	fish-body_color-white	fish-body_color-orange	distr2	73381	clickedObj
+1	flowers_orange_petals_purple_centers	development	1733-db81f8ab-4092-4fa9-b3e3-9a27f35b27e5	1554918555673	listener	flower-petals_color-orange	flower-center_color-purple	flower-center_color-white	distr2	16818	clickedObj
+2	trees_without_leaves	development	1733-db81f8ab-4092-4fa9-b3e3-9a27f35b27e5	1554918584238	listener	tree-leaves_present	tree-leaves_present-false	tree-trunk_color-purple	distr1	25513	clickedObj

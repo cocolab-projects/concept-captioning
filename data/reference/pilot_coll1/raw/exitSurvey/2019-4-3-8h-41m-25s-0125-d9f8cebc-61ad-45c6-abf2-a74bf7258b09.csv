@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+fish_white_stripes_or_purple_bodies_whiskers	development	0125-d9f8cebc-61ad-45c6-abf2-a74bf7258b09	1554306085283	listener	90	0125-d9f8cebc-61ad-45c6-abf2-a74bf7258b09	yes	loved	yes	I had no problems	I just based it off the hints the other person gave me	listener	1674886	exitSurvey
+fish_white_stripes_or_purple_bodies_whiskers	development	0125-d9f8cebc-61ad-45c6-abf2-a74bf7258b09	1554306099342	listener	90	0125-d9f8cebc-61ad-45c6-abf2-a74bf7258b09	yes	okay	yes		describe the odd feature	speaker	1745640	exitSurvey

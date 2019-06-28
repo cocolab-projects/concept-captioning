@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+trees_purple_berries	development	6509-66eb17d8-f481-4cfd-93a1-65a9c9987880	1554915980710	speaker	90	6509-66eb17d8-f481-4cfd-93a1-65a9c9987880	yes	loved	yes	This is underpaid, 	Describe the picture in the fewest possible words for them to clearly understand it,	speaker	979700	exitSurvey
+trees_purple_berries	development	6509-66eb17d8-f481-4cfd-93a1-65a9c9987880	1554915994360	speaker	90	6509-66eb17d8-f481-4cfd-93a1-65a9c9987880	no	loved	yes	Nope,	I paid attention to the descriptions	listener	921575	exitSurvey

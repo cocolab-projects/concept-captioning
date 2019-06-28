@@ -1,0 +1,15 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	flowers_purple_stems_thorns	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916015429	speaker	flower-stem_color-purple	flower-center_color-white	flower-petals_color-purple	target	177108	clickedObj
+1	trees_without_leaves	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916052225	speaker	tree-leaves_present	tree-leaves_present-false	tree-trunk_color-purple	target	33754	clickedObj
+2	bugs_without_wings	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916082946	speaker	bug-wings_present	bug-body_color-purple	bug-legs_color-purple	target	27699	clickedObj
+3	bugs_white_heads_or_orange_antennae_purple_legs	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916102224	speaker	bug-head_color-white	bug-antennae_color-orange	bug-legs_color-white	distr1	16245	clickedObj
+4	fish_orange_bodies_purple_stripes_or_whiskers	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916115032	speaker	fish-stripes_present	fish-stripes_color-white	fish-stripes_color-orange	target	9785	clickedObj
+5	trees_purple_leaves_berries	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916133637	speaker	tree-leaves_color-purple	tree-trunk_color-purple	tree-leaves_color-purple	target	15572	clickedObj
+6	fish_orange_bodies_or_fangs	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916153478	speaker	fish-body_color-orange	fish-whiskers_present-true	fish-body_color-white	target	16807	clickedObj
+7	fish_orange_bodies_purple_stripes_or_whiskers	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916181170	speaker	fish-stripes_color-purple	fish-body_color-purple	fish-whiskers_present-false	target	24581	clickedObj
+8	fish_fangs	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916197843	speaker	fish-fangs_present	fish-body_color-purple	fish-stripes_color-orange	target	13635	clickedObj
+9	trees_white_leaves_or_orange_berries	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916224596	speaker	tree-berries_color-orange	tree-leaves_present-false	tree-berries_color-purple	target	23730	clickedObj
+10	fish_white_bodies_orange_stripes_or_fangs	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916248269	speaker	fish-body_color-white	fish-whiskers_present-true	fish-stripes_present-true	target	20648	clickedObj
+11	flowers_purple_stems_white_petals_or_orange_centers	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916259468	speaker	flower-petals_color-white	flower-stem_color-orange	flower-petals_color-orange	target	8159	clickedObj
+12	trees_orange_trunks_or_berries_white_leaves	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916276110	speaker	tree-leaves_color-white	tree-leaves_present-true	tree-trunk_color-purple	target	13604	clickedObj
+13	birds_orange_wings_tails	development	9803-1b4d8ff5-22eb-4e9c-b63b-6ba9e29df5b5	1554916582546	speaker	bird-bird_wing_color-orange	bird-crest_present-true	bird-crest_tail_color-orange	target	303399	clickedObj

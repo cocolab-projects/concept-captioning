@@ -1,0 +1,3 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	fish_whiskers	development	5601-39d349cf-1131-4a57-a01b-90b1b7ba8429	1554919195067	listener	fish-whiskers_present	fish-fangs_present-false	fish-body_color-white	target	16971	clickedObj
+1	fish_white_bodies_orange_stripes_or_fangs	development	5601-39d349cf-1131-4a57-a01b-90b1b7ba8429	1554919212917	listener	fish-stripes_color-orange	fish-body_color-purple	fish-stripes_color-orange	target	14379	clickedObj

@@ -1,0 +1,8 @@
+trialNum	rule	iterationName	gameid	time	firstRole	salientFeature	distr1Feature	distr2Feature	selection	timeFromRoundStart	eventType
+0	flowers_orange_stems_or_thorns	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554304849896	listener	flower-thorns_present	flower-center_color-orange	flower-center_color-white	target	78603	clickedObj
+1	bugs_antennae_or_wings_purple_bodies	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554304985687	listener	bug-body_color-purple	bug-head_color-white	bug-wings_present-false	target	132760	clickedObj
+2	flowers_orange_petals_purple_centers	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554305107863	listener	flower-petals_color-orange	flower-stem_color-orange	flower-petals_color-orange	distr1	119143	clickedObj
+3	flowers_purple_stems_or_thorns_white_centers	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554305166286	listener	flower-center_color-white	flower-center_color-orange	flower-stem_color-purple	distr2	55390	clickedObj
+4	birds_orange_crests_or_purple_wings	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554305209793	listener	bird-bird_wing_color-purple	bird-crest_present-true	bird-crest_tail_color-purple	target	40476	clickedObj
+5	flowers_purple_stems_white_petals_or_orange_centers	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554305391266	listener	flower-petals_color-white	flower-petals_color-orange	flower-stem_color-orange	distr1	178423	clickedObj
+6	fish_white_bodies_orange_stripes_or_fangs	development	0309-7f8b1a32-05ad-48e4-80f0-6bc7b4d5e426	1554305514992	listener	fish-stripes_color-orange	fish-whiskers_present-true	fish-stripes_color-purple	target	120694	clickedObj

@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+fish_whiskers	development	9703-79a83498-4d4f-4af1-91ed-3392718cc234	1555007823132	listener	88	9703-79a83498-4d4f-4af1-91ed-3392718cc234	yes	loved	yes	No problems,	Just describe it,	speaker	2189593	exitSurvey
+fish_whiskers	development	9703-79a83498-4d4f-4af1-91ed-3392718cc234	1555007873987	listener	88	9703-79a83498-4d4f-4af1-91ed-3392718cc234	yes	liked	yes	On one of them, the "fish" didn't load the entire mouth, so I couldn't see the fangs and had to guess because otherwise two were identical,	To follow all the descriptions provided by the describer	listener	1941703	exitSurvey

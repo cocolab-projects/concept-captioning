@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+trees_without_leaves	development	0146-9cbdad4a-90a0-4caf-a8b1-5c4378c1793f	1554321333567	listener	78	0146-9cbdad4a-90a0-4caf-a8b1-5c4378c1793f	yes	loved	yes	great	great	speaker	3086508	exitSurvey
+trees_without_leaves	development	0146-9cbdad4a-90a0-4caf-a8b1-5c4378c1793f	1554321353565	listener	78	0146-9cbdad4a-90a0-4caf-a8b1-5c4378c1793f	yes	okay	yes	no	ask questions when needed to	listener	2903748	exitSurvey

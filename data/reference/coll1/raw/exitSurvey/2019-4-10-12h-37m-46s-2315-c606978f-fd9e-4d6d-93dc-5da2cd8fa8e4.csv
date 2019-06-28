@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+flowers_orange_petals_purple_centers	development	2315-c606978f-fd9e-4d6d-93dc-5da2cd8fa8e4	1554925066100	listener	88	2315-c606978f-fd9e-4d6d-93dc-5da2cd8fa8e4	yes	loved	yes		Choose whatever the speaker said	listener	941856	exitSurvey
+flowers_orange_petals_purple_centers	development	2315-c606978f-fd9e-4d6d-93dc-5da2cd8fa8e4	1554925071716	listener	88	2315-c606978f-fd9e-4d6d-93dc-5da2cd8fa8e4	yes	okay	yes	no	keep it simple and concise 	speaker	1150686	exitSurvey

@@ -1,0 +1,3 @@
+rule	iterationName	gameid	time	firstRole	score	gameId	nativeEnglish	ratePartner	confused	comments	strategy	role	totalLength	eventType
+birds_tails	development	8576-e5b45ae6-a057-4a9d-8b0b-cf1654183f52	1554923235853	speaker	82	8576-e5b45ae6-a057-4a9d-8b0b-cf1654183f52	yes	okay	yes	It seemed like we were getting different photos because I would ask questions to clarify and they would say they had no pictures like that	I listened to what the speaker gave me	listener	1028112	exitSurvey
+birds_tails	development	8576-e5b45ae6-a057-4a9d-8b0b-cf1654183f52	1554923240377	speaker	82	8576-e5b45ae6-a057-4a9d-8b0b-cf1654183f52	yes	liked	yes	I didn't have any problems/	To be as descriptive as possible with few words,	speaker	1056507	exitSurvey
