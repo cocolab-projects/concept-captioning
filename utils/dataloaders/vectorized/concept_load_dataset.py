@@ -78,17 +78,26 @@ def construct_field(
         raise Exception('Invalid Field Type')
 
 
+### Note: we're using torchtext for its torchtext.data ("data") library
+### Apparently torchtext is a "text preprocessing" library, designed to work with any DL library
+### http://anie.me/On-Torchtext/ <----- excellent tutorial
+### General goal: translate sentences into lists of indices that index into word embeddings?
+### Q: why do we use .tsv here? Is it just an ML-wide standard? 
 def load_dataset(file_template, lemmatized=False):
     """ Read text components of dataset into memory and preprocess accordingly.
     @param file_template: './data/xsd/{}/data.tsv' -- file path except for train/val/test 
     """
     # Define TorchText fields
+    ### these are still just strings pointing NOT to folders, but rather .tsv's in folders
     train_file = file_template.format('train')
     val_file = file_template.format('val')
     test_file = file_template.format('test')
 
+    ### Read in the labels of the columns as a list
     columns = pd.read_csv(test_file, sep='\t').columns.values.tolist()
+    ### Dict of fields (torchtext types for columns of tabular dataset, implying how to preprocess them)
     column_field_types = {}
+    ### List of feature fields, which are later to be turned into embedded vectors
     stim_fields = []
     for c in columns:
         if '-' in c:
