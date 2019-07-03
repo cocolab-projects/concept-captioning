@@ -125,6 +125,7 @@ if __name__ == "__main__":
     if args.cuda:
         # GPU available
         ### data is torchtext.data
+        ### Iterator.splits() creates iterators (essentially DataLoaders, AFAIK) for multiple splits
         train_loader, val_loader = data.Iterator.splits(
                 (train_data, val_data), sort_key=sort_key, sort_within_batch=True,
                 batch_sizes=(args.batch_size, args.batch_size), device=torch.device('cuda'))
@@ -230,8 +231,12 @@ if __name__ == "__main__":
         ### Model is declared in global space 
         ### (although after this function, which is allowed, I guess?)
         # Data loading & progress visualization
+        ### loss_meter stores the loss of the current batch and the average loss
         loss_meter = AverageMeter()
         acc_meter = AccuracyMeter()
+        ### tqdm is a progress bar for iterations of a loop through an iterator
+        ### generally you wrap the iterable in it, like tqdm(range), to automatically keep track of #iterations
+        ### but you can also use pbar.update() to tell it to iterate manually
         pbar = tqdm(total=len(train_loader))
         train_loader.init_epoch()
         
@@ -243,18 +248,24 @@ if __name__ == "__main__":
             ### (This is never used in code, i.e. backprop is always true)
             student.eval()
 
+        ### Enumerate produces a (counter, item) pair for each item in an iterator
+        ### "train_loader" is an iterator of minibatches
         for batch_idx, batch in enumerate(train_loader):
             optimizer.zero_grad()
+            ### loss is F.cross_entropy(logits, y)
             loss, alphas, logits = compute_loss(batch)
             loss += compute_self_att_loss(alphas)
 
             if backprop:
+                ### step I don't understand
                 loss.backward()
                 optimizer.step()
 
             # Update progress
             acc_meter.update(logits, batch)
             loss_meter.update(loss.data.item(), batch.batch_size)
+            ### Every so often, print progress information (example #, average loss over this epoch, etc.)
+            ### also resets pbar onto a new line
             if batch_idx % args.log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * batch.batch_size, len(train_loader.dataset),
@@ -298,6 +309,10 @@ if __name__ == "__main__":
     kwargs.pop('concept_vocab_field', None) # remove vocab_field, as it is not serializable
     if args.cuda:
         student = student.to('cuda')
+    ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
+    ### based on recent gradients (low gradients --> high LR, vice versa)
+    ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
+    ### People apparently just use it because it works well
     optimizer = optim.Adam(student.parameters(), lr=args.lr, weight_decay=1e-4)
 
     matplotlib.use('agg')

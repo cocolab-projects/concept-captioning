@@ -23,23 +23,23 @@ class Teacher(nn.Module):
         @param **kwargs: parameters associated with initializing the language model
             and the stimulus model.
         """
-        super(SingleTaskStudent, self).__init__()
-        if kwargs['language_model_type'] == 'bilstm':
-            self.languageModel = BiLSTM(
-                h_dim=kwargs['h_dim_l'],
-                o_dim=kwargs['o_dim_l'],
-                d_prob=kwargs['d_prob_l'],      
-                with_self_att=kwargs['with_self_att'],      
-                d_dim=kwargs['d_dim_l'],      
-                r_dim=kwargs['r_dim_l'],      
-                num_layers=kwargs['num_layers_l'],      
-                embeddings=kwargs['embeddings'],
-                concept_vocab_field=kwargs['concept_vocab_field'],
-                ref_vocab_field=kwargs['reference_vocab_field'],
-                task=kwargs['task']
-            )
-        else:
-            raise Exception('Invalid Language Model')
+        super(Teacher, self).__init__()
+        # if kwargs['language_model_type'] == 'bilstm':
+        #    self.languageModel = BiLSTM(
+        #         h_dim=kwargs['h_dim_l'],
+        #         o_dim=kwargs['o_dim_l'],
+        #         d_prob=kwargs['d_prob_l'],      
+        #         with_self_att=kwargs['with_self_att'],      
+        #         d_dim=kwargs['d_dim_l'],      
+        #         r_dim=kwargs['r_dim_l'],      
+        #         num_layers=kwargs['num_layers_l'],      
+        #         embeddings=kwargs['embeddings'],
+        #         concept_vocab_field=kwargs['concept_vocab_field'],
+        #         ref_vocab_field=kwargs['reference_vocab_field'],
+        #         task=kwargs['task']
+        #     )
+        # else:
+        #     raise Exception('Invalid Language Model')
         
         ### Either way, stimModel outputs an embedded representation of the its inputs
         if kwargs['stim_model_type'] == 'featureMLP':
@@ -67,24 +67,34 @@ class Teacher(nn.Module):
             
         ### MLP to go from language rep + stimulus rep to probability that 
         ### the concept description applies to the stimulus
-        self.mlp = MLP(
-            i_dim=kwargs['o_dim_l'] + kwargs['o_dim_s'],
-            h_dim=kwargs['hidden_dim_student'],
-            o_dim=kwargs['output_dim'],
-            d_prob=kwargs['d_prob_student'],
-            batch_norm=kwargs['batch_norm'],
-            num_layers=kwargs['num_layers_student'],
+        # self.mlp = MLP(
+        #     i_dim=kwargs['o_dim_l'] + kwargs['o_dim_s'],
+        #     h_dim=kwargs['hidden_dim_student'],
+        #     o_dim=kwargs['output_dim'],
+        #     d_prob=kwargs['d_prob_student'],
+        #     batch_norm=kwargs['batch_norm'],
+        #     num_layers=kwargs['num_layers_student'],
         )
 
-    def forward(self, x1, x2, x1_lengths):
-        """ x1: language (describing concept)
-            x2: stimulus (from test set)
-            x1_lengths: true lengths of text in x1
+    ### forward: defines how the module transforms input to output
+    ### technically just a function on any arbitrary input, can give any arbitrary output?
+    ### called using the name of the object, e.g. teacher(input)
+    ### (i.e. they override the __call__ function)
+    def forward(self, x1):
+        """ x1: set of stimuli
         """
-        languageRep, alphas = self.languageModel(x1, x1_lengths)
-        stimRep = self.stimModel(x2)
-        joinedRep = torch.cat([languageRep, stimRep], dim=1) 
-        ### above, dim is the concatenating dimension;
-        ### in this case, dim 0 is likely batches, so dim 1 is the reps themselves
+        # Create representations of stimuli
+        stimRep = self.stimModel(x1)
+        
+        # Form representation of concept from stimuli
+        # Eventually to be done with attention, but for now just uses averages
+        # TODO average 
+        
         logits = self.mlp(joinedRep)
         return logits, alphas
+
+
+        # joinedRep = torch.cat([languageRep, stimRep], dim=1) 
+        ### above, dim is the concatenating dimension;
+        ### in this case, dim 0 is likely batches, so dim 1 is the reps themselves
+        # languageRep, alphas = self.languageModel(x1, x1_lengths)
