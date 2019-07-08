@@ -113,6 +113,7 @@ def load_dataset(file_template, lemmatized=False):
     train = TabularDataset(train_file, format='tsv', fields=column_field_types)
     val = TabularDataset(val_file, format='tsv', fields=column_field_types)
     test = TabularDataset(val_file, format='tsv', fields=column_field_types)
+    breakpoint()
 
     return train, val, test, column_field_types, stim_fields
     

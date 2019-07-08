@@ -18,7 +18,7 @@ import time
 
 from models.student.lfl.single_task_student import SingleTaskStudent
 from utils.constants import Constants
-from utils.dataloaders.vectorized.concept_load_dataset import load_dataset, construct_stim_reps, construct_y, convert_to_elmo_ids
+from utils.dataloaders.vectorized.concept_load_dataset_teacher import load_dataset, construct_stim_reps, construct_y, convert_to_elmo_ids
 from experiments.utils import AverageMeter, AccuracyMeter, save_student_checkpoint, set_seeds
 from experiments.utils import load_single_task_student_checkpoint as load_student_checkpoint
 
@@ -115,17 +115,18 @@ if __name__ == "__main__":
         os.makedirs(os.path.join(args.out_dir, model_id))
 
     # Construct Data Loaders &  Iterators
-    ### Default args.data is /data/concept/{}/vectorized/concat_informative_dataset.tsv, whatever that is
+    ### Default args.data is /data/concept/{}/vectorized/concat_informative_dataset
     ### (.tsv is just tab-separated-value, i.e. like csv, so just a table)
     ### The actual '{}' folders are (raw; maybe not used here), test, train and val
-    ### {} is a place to put the str.format() string, like % in C, so it's replaced by test, train and val in load_dataset
     ### {}_data is a TabularDataset (torchtext.data object)
+
+    ### fields is column_field_types, which was also set to be the "fields" variable of {}_data
     train_data, val_data, test_data, fields, stim_fields = load_dataset(args.data)
     sort_key = lambda x: len(x.text)
     if args.cuda:
         # GPU available
         ### data is torchtext.data
-        ### Iterator.splits() creates iterators (essentially DataLoaders, AFAIK) for multiple splits
+        ### Iterator.splits() creates iterators (essentially DataLoaders, except for TabularDatasets, AFAIK) for multiple splits
         train_loader, val_loader = data.Iterator.splits(
                 (train_data, val_data), sort_key=sort_key, sort_within_batch=True,
                 batch_sizes=(args.batch_size, args.batch_size), device=torch.device('cuda'))
@@ -137,7 +138,15 @@ if __name__ == "__main__":
 
 
     # Construct vocabulary objects & write to disk
+    breakpoint()
+    ### glove by default
+    ### builds the mapping from tokens to (well, initially I thought ints, but actually) representation vectors
+    ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
+    ### (i.e. the words that the model should 'know about', to start with?) TODO confirm all of this
+    ### TODO also ask what the numbers after "glove." mean
+    ### note: the (gigantic) vocab file is stored in .\.vector_cache
     if args.embeddings == "glove":
+        breakpoint()
         fields['text'][1].build_vocab(train_data, vectors="glove.840B.300d")
         torch.save(fields['text'][1], os.path.join(args.out_dir, model_id, 'vocab.pkl'), pickle_module=dill)
     elif args.embeddings == "elmo":
@@ -146,7 +155,8 @@ if __name__ == "__main__":
         print("Using ELMO's pre-trained embeddings")
     else:
         raise Exception("Invalid Embeddings Type")
-
+    ### building vocab for non-text fields; odd, since in practice these all have use_vocab = false
+    ### TODO remove these lines and see if it breaks
     for _, t in fields.items():
         c, field = t
         if c != 'text':
@@ -199,6 +209,10 @@ if __name__ == "__main__":
             x_l_reversed = vocab_field.reverse(x_l.data)
             x_l = convert_to_elmo_ids(x_l_reversed, args.cuda)
             x_l_lengths = None
+        ### get the (batch_size) tensor (basically list) of stimuli
+        ### TODO it's not a big deal, but doing this for every batch 
+        ### (or at least every epoch) is pretty computationally inefficient
+        ### (better to just do it at the start, like creating a new data file)
         x_s = construct_stim_reps(batch, stim_fields)
         if args.cuda:
             x_s = x_s.to('cuda')
@@ -226,6 +240,7 @@ if __name__ == "__main__":
 
 
     def train(epoch=-1, backprop=True):
+        breakpoint()
         """ Train model for a single epoch.
         """
         ### Model is declared in global space 
