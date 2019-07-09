@@ -29,6 +29,9 @@ def tokenize_fct(text):
 def tokenize_fct_lemmatize(text):
     return [tok.lemma_ for tok in nlp.tokenizer(text)]  
 
+def tokenize_binary_string(string):
+    return [char for char in string]
+
 
 
 def construct_field(
@@ -96,16 +99,50 @@ def construct_field(
             batch_first=batch_first,
             preprocessing = lambda x: (x == 'True')
         )
+    elif field_type == 'binary_string':
+        return Field(
+            use_vocab=True,
+            batch_first=batch_first,
+            sequential = True,
+            tokenize = tokenize_binary_string
+        )
     else:
         raise Exception('Invalid Field Type')
 
+def load_dataset(file_template, lemmatized=False):
+    """ Read text components of dataset into memory and preprocess accordingly.
+    @param file_template: './data/xsd/{}/data.tsv' -- file path except for train/val/test 
+    """
+    # Define TorchText fields
+    ### these are still just strings pointing NOT to folders, but rather .tsv's in folders
+    train_file = file_template.format('train')
+    val_file = file_template.format('val')
+    test_file = file_template.format('test')
+    ### Read in the labels of the columns as a list
+    columns = pd.read_csv(test_file, sep='\t').columns.values.tolist()
+    ### Dict of fields (torchtext types for columns of tabular dataset, implying how to preprocess them)
+    ### Of type (str, field)
+    column_field_types = {}
+    stim_fields = []
+    for c in columns:
+        if c == 'text':
+            column_field_types[c] = (c, construct_field('input_text', lemmatized=lemmatized))
+        else:
+            column_field_types[c] = (c, construct_field('binary_string'))
+            
+    ### Why are we throwing away the test data? (answered)
+    train = TabularDataset(train_file, format='tsv', fields=column_field_types)
+    val = TabularDataset(val_file, format='tsv', fields=column_field_types)
+    test = TabularDataset(val_file, format='tsv', fields=column_field_types)
+
+    return train, val, test, column_field_types, stim_fields
 
 ### Note: we're using torchtext for its torchtext.data ("data") library
 ### Apparently torchtext is a "text preprocessing" library, designed to work with any DL library
 ### http://anie.me/On-Torchtext/ <----- excellent tutorial
 ### General goal: translate sentences into lists of indices that index into word embeddings?
 ### Q: why do we use .tsv here? Is it just an ML-wide standard? 
-def load_dataset(file_template, lemmatized=False):
+def load_dataset_old(file_template, lemmatized=False):
     """ Read text components of dataset into memory and preprocess accordingly.
     @param file_template: './data/xsd/{}/data.tsv' -- file path except for train/val/test 
     """
@@ -182,6 +219,8 @@ def gen_text_preprocessor():
             r'morthess(es)?'
             r'moseth(s)?'
         ]
+        ### TODO this seems sketchy (people already use "creature" in their descriptions);
+        ### maybe should replace with some completely unique string
         for expr in creature_regexes:
             string = re.sub(expr, 'creature', string)
         for expr in creature_misspellings:
@@ -201,11 +240,11 @@ def construct_stim_reps(batch, stim_fields):
     ### Appends all of the different features together into one column
     vals = []
     for f in stim_fields:
-        vals.append(batch.__dict__[f].unsqueeze(dim=1)) # (1, batch_size) ### TODO why is this not (batch_size, 1)???
+        vals.append(batch.__dict__[f].unsqueeze(dim=1)) ### (batch_size, 1)
         breakpoint()
         ### I mean, really it's a length num_feats list of length batch_size tensors
     stims = torch.cat(vals, dim=1)
-    ### TODO why do we want this to be a float??? how would that conversion even work?
+    ### convert entire tensor into floats
     return stims.float()
 
 

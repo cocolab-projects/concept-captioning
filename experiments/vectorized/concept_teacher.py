@@ -77,7 +77,7 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--data', type=str, default='./data/concept/{}/vectorized/concat_informative_dataset.tsv',
+    parser.add_argument('--data', type=str, default='./data/concept/{}/vectorized/concept_dataset.tsv',
                         help='file template for dataset')
     parser.add_argument('--bn', action='store_true', default=False,
                         help='use batch normalization')
@@ -138,7 +138,6 @@ if __name__ == "__main__":
 
 
     # Construct vocabulary objects & write to disk
-    breakpoint()
     ### glove by default
     ### builds the mapping from tokens to (well, initially I thought ints, but actually) representation vectors
     ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
@@ -146,7 +145,6 @@ if __name__ == "__main__":
     ### TODO also ask what the numbers after "glove." mean
     ### note: the (gigantic) vocab file is stored in .\.vector_cache
     if args.embeddings == "glove":
-        breakpoint()
         fields['text'][1].build_vocab(train_data, vectors="glove.840B.300d")
         torch.save(fields['text'][1], os.path.join(args.out_dir, model_id, 'vocab.pkl'), pickle_module=dill)
     elif args.embeddings == "elmo":
@@ -202,6 +200,7 @@ if __name__ == "__main__":
     kwargs['reference_vocab_field'] = None
 
     def compute_loss(batch):
+        breakpoint()
         """ Compute loss.
         """
         (x_l, x_l_lengths) = batch.text
