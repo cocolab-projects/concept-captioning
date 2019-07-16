@@ -8,7 +8,7 @@ import pandas as pd
 
 DATA_DIR = "./data/concept/{}/vectorized/"
 ORIG_TSV_NAME = "concat_informative_dataset.tsv"
-NEW_TSV_NAME = "concept_dataset_all_labels.tsv"
+NEW_TSV_NAME = "concept_dataset.tsv"
 
 
 def main():

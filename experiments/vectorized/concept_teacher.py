@@ -1,10 +1,10 @@
  #!/usr/bin/env python 
 """
-File: concept.py
-Author: Sahil Chopra (schopra8@stanford.edu)
-Date: February 21, 2019
-Description: Train biLSTM model model (with or without Self Attention) 
-    and a feature-driven stimulus representation. Concept-Learning experiment.
+File: concept_teacher.py
+Author: Will Schwarzer (schwarzerw@carleton.edu)
+Date: July 15, 2019
+Description: Trains a concept encoder (MLP for vectorized concepts or CNN for
+images) and decoder (LSTM).
 """
 import uuid
 import json
@@ -16,7 +16,7 @@ import revtok
 import sys
 import time
 
-from models.student.lfl.single_task_student import SingleTaskStudent
+from models.teacher.teacher import Teacher
 from utils.constants import Constants
 from utils.dataloaders.vectorized.concept_load_dataset_teacher import load_dataset, construct_stim_reps, construct_y, convert_to_elmo_ids
 from experiments.utils import AverageMeter, AccuracyMeter, save_student_checkpoint, set_seeds
@@ -26,6 +26,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import torchtext.data as data
+import pandas as pd
 from tqdm import tqdm
 
 
@@ -140,9 +141,8 @@ if __name__ == "__main__":
     # Construct vocabulary objects & write to disk
     ### glove by default
     ### builds the mapping from tokens to (well, initially I thought ints, but actually) representation vectors
+    ### also converts words to their vocab indices
     ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
-    ### (i.e. the words that the model should 'know about', to start with?) TODO confirm all of this
-    ### TODO also ask what the numbers after "glove." mean
     ### note: the (gigantic) vocab file is stored in .\.vector_cache
     if args.embeddings == "glove":
         fields['text'][1].build_vocab(train_data, vectors="glove.840B.300d")
@@ -153,13 +153,6 @@ if __name__ == "__main__":
         print("Using ELMO's pre-trained embeddings")
     else:
         raise Exception("Invalid Embeddings Type")
-    ### building vocab for non-text fields; odd, since in practice these all have use_vocab = false
-    ### TODO remove these lines and see if it breaks
-    for _, t in fields.items():
-        c, field = t
-        if c != 'text':
-            field.build_vocab(train_data)
-    
   
     kwargs = {
         'language_model_type': 'bilstm',
@@ -191,6 +184,11 @@ if __name__ == "__main__":
         'model_id': model_id,
         'date:': time.strftime("%Y-%m-%d %H:%M"),
         'task': 'concept',
+
+        'unk_index': fields['text'][1].vocab.stoi[Constants.UNK_TOKEN],
+        'pad_index': fields['text'][1].vocab.stoi[Constants.PAD_TOKEN],
+        'start_index': fields['text'][1].vocab.stoi[Constants.START_TOKEN],
+        'end_index': fields['text'][1].vocab.stoi[Constants.END_TOKEN]
     }
 
     with open(os.path.join(model_ids_dir, '{}.json'.format(kwargs['model_id'])), 'w') as model_params_f:
@@ -200,27 +198,46 @@ if __name__ == "__main__":
     kwargs['reference_vocab_field'] = None
 
     def compute_loss(batch):
-        breakpoint()
         """ Compute loss.
         """
-        (x_l, x_l_lengths) = batch.text
-        if args.embeddings == "elmo":
-            x_l_reversed = vocab_field.reverse(x_l.data)
-            x_l = convert_to_elmo_ids(x_l_reversed, args.cuda)
-            x_l_lengths = None
-        ### get the (batch_size) tensor (basically list) of stimuli
-        ### TODO it's not a big deal, but doing this for every batch 
-        ### (or at least every epoch) is pretty computationally inefficient
-        ### (better to just do it at the start, like creating a new data file)
-        x_s = construct_stim_reps(batch, stim_fields)
-        if args.cuda:
-            x_s = x_s.to('cuda')
-        logits, alphas = student(x_l, x_s, x_l_lengths)
-        y = construct_y(batch, kwargs['train_obj'])
-        if args.cuda:
-            y = y.to('cuda')
-        loss = F.cross_entropy(logits, y)
-        return loss, alphas, logits
+        stims, labels, language, lang_lengths = get_inputs(batch)
+        logits = teacher(stims, labels, language, lang_lengths)
+        # logits shape: (batch size, max seq length, num vocab)
+        # Assume rnn_decoder is your language model;
+        # img_rep is your image representation (batch_size x hidden_size);
+        # language is your list of sentences (batch_size x max_lang_length)
+        # lang_length is your list of language lengths (batch_Size)
+        max_seq_len = language.size(1)
+        # We only care about logits up to the last token 
+        # (after the last token, there's nothing to predict!)
+        ### Also, we don't need to care about how it predicted the first token, 
+        ### since it's always an SOS
+        logits = logits[:, :-1].contiguous()
+        language = language[:, 1:].contiguous()
+
+        # Get the batch size (and make sure it's the same for all data)
+        batch_size = stims.shape[0]
+        assert(batch_size == language.shape[0] == lang_lengths.shape[0] == labels.shape[0])
+        # "Unfold" the sequence so we have a 2d matrix
+        logits_2d = logits.view(batch_size * (max_seq_len - 1), -1)
+        ### TODO we probably don't need to convert language to longs here
+        ### (it should already be longs, since we never converted to floats
+        language_1d = language.long().view(batch_size * (max_seq_len - 1))
+
+        # Cross entrops is your loss function - in short, you pay a penalty if you put probability amss onl #TODO ?
+        # Note this works *without* having to normalize the softmax output
+        loss = F.cross_entropy(logits_2d, language_1d, reduction='none')
+        loss = loss.view(batch_size, (max_seq_len - 1))
+        
+        # Mask out losses for pad tokens
+        loss *= (language != kwargs['pad_index']).float()
+        # Sum up the loss for each token prediction to get a total loss per language
+        total_losses = torch.sum(loss, dim=1)
+        # Normalize total loss for each sequence by its length
+        total_losses /= lang_lengths.float()
+        # then average across language in the batch
+        average_loss = torch.mean(total_losses)
+        return average_loss, logits
 
 
     def compute_self_att_loss(alphas):
@@ -237,9 +254,29 @@ if __name__ == "__main__":
         else:
             return 0.0
 
+    def get_inputs(batch):
+        (language, lang_lengths) = batch.text
+        ### language: (batch_size, max language length)
+        ### lang_lengths: (batch_size)
+        if args.embeddings == "elmo":
+            ### TODO change vars
+            x_l_reversed = vocab_field.reverse(x_l.data)
+            x_l = convert_to_elmo_ids(x_l_reversed, args.cuda)
+            x_l_lengths = None
+        ### get the (batch_size) tensor (basically list) of stimuli
+        stims = construct_stim_reps(batch)
+        labels = batch.__dict__['labels'].float()
+        if args.cuda:
+            stims = stims.to('cuda')
+            language = language.to('cuda')
+            lang_lengths = lang_lengths.to('cuda')
+            labels = labels.to('cuda')
+        breakpoint()
+        orig_lang = fields['text'][1].reverse(language)
+        return stims, labels, language, lang_lengths
+
 
     def train(epoch=-1, backprop=True):
-        breakpoint()
         """ Train model for a single epoch.
         """
         ### Model is declared in global space 
@@ -247,7 +284,7 @@ if __name__ == "__main__":
         # Data loading & progress visualization
         ### loss_meter stores the loss of the current batch and the average loss
         loss_meter = AverageMeter()
-        acc_meter = AccuracyMeter()
+        #acc_meter = AccuracyMeter()
         ### tqdm is a progress bar for iterations of a loop through an iterator
         ### generally you wrap the iterable in it, like tqdm(range), to automatically keep track of #iterations
         ### but you can also use pbar.update() to tell it to iterate manually
@@ -256,19 +293,18 @@ if __name__ == "__main__":
         
         if backprop:
             ### Sets model in training mode
-            student.train()
+            teacher.train()
         else:
             ### Sets model in evaluation mode
             ### (This is never used in code, i.e. backprop is always true)
-            student.eval()
+            teacher.eval()
 
         ### Enumerate produces a (counter, item) pair for each item in an iterator
         ### "train_loader" is an iterator of minibatches
         for batch_idx, batch in enumerate(train_loader):
             optimizer.zero_grad()
             ### loss is F.cross_entropy(logits, y)
-            loss, alphas, logits = compute_loss(batch)
-            loss += compute_self_att_loss(alphas)
+            loss, logits = compute_loss(batch)
 
             if backprop:
                 ### step I don't understand
@@ -276,7 +312,7 @@ if __name__ == "__main__":
                 optimizer.step()
 
             # Update progress
-            acc_meter.update(logits, batch)
+            #acc_meter.update(logits, batch)
             loss_meter.update(loss.data.item(), batch.batch_size)
             ### Every so often, print progress information (example #, average loss over this epoch, etc.)
             ### also resets pbar onto a new line
@@ -288,7 +324,7 @@ if __name__ == "__main__":
         pbar.close()
         print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, loss_meter.avg))
         print('Training Objective ({}) Train Accuracies:'.format(kwargs['train_obj']))
-        acc_meter.print()
+        #acc_meter.print()
         return loss_meter.avg
 
 
@@ -296,38 +332,38 @@ if __name__ == "__main__":
         """ Run model through validation dataset.
         """
         loss_meter = AverageMeter()
-        acc_meter = AccuracyMeter()
+        #acc_meter = AccuracyMeter()
         pbar = tqdm(total=len(val_loader))
         val_loader.init_epoch()
-        student.eval()
+        teacher.eval()
 
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_loader):
-                loss, alphas, logits = compute_loss(batch)
-                loss += compute_self_att_loss(alphas)
-                acc_meter.update(logits, batch)
+                loss, logits = compute_loss(batch)
+                #loss += compute_self_att_loss(alphas)
+                #acc_meter.update(logits, batch)
                 loss_meter.update(loss.data.item(), batch.batch_size)
                 pbar.update()
         pbar.close()
         print('====> Validation set loss: {:.4f}'.format(loss_meter.avg))
         print('Training Objective ({}) Validation Accuracies:'.format(kwargs['train_obj']))
-        acc_meter.print()
-        return loss_meter.avg, acc_meter
+        #acc_meter.print()
+        return loss_meter.avg#, acc_meter
 
     # Model Training
     ### Setting the seeds again for some reason?
     set_seeds()
     ### Student is the model we're training
     ### Kwargs is a dictionary of variables declared above
-    student = SingleTaskStudent(**kwargs)
+    teacher = Teacher(**kwargs)
     kwargs.pop('concept_vocab_field', None) # remove vocab_field, as it is not serializable
     if args.cuda:
-        student = student.to('cuda')
+        teacher = teacher.to('cuda')
     ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
     ### based on recent gradients (low gradients --> high LR, vice versa)
     ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
     ### People apparently just use it because it works well
-    optimizer = optim.Adam(student.parameters(), lr=args.lr, weight_decay=1e-4)
+    optimizer = optim.Adam(teacher.parameters(), lr=args.lr, weight_decay=1e-4)
 
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
@@ -342,21 +378,23 @@ if __name__ == "__main__":
     losses = np.zeros((args.epochs, 2))
     for epoch in range(1, args.epochs + 1):
         train_loss = train(epoch)
-        val_loss, val_acc_meter = val()
+        val_loss = val()
         losses[epoch - 1, 0] = train_loss
-        losses[epoch - 1, 1] = val_loss
+        #losses[epoch - 1, 1] = val_loss
 
         # keep track of best weights -- this is equivalent
         # to a simple version of early-stopping
+        '''
         is_best = best_acc < val_acc_meter.compute_gt_acc()
         if is_best:
             best_acc = val_acc_meter.compute_gt_acc()
             best_epoch = epoch
 
         # save weights to dict
+        ### This really should just be taken from kwargs
         save_student_checkpoint(
             {
-                'state_dict': student.state_dict(),
+                'state_dict': teacher.state_dict(),
                 'val_loss': val_loss,
                 'vocab_file': os.path.join(args.out_dir, model_id, 'vocab.pkl'),
                 'optimizer': optimizer.state_dict(),
@@ -369,7 +407,20 @@ if __name__ == "__main__":
             'checkpoint.pth.tar',
             'model_best.pth.tar'
         )
-
+    '''
+    ### TODO why are so many words mapping to the unknown character?
+    ### NOTE stoi stands for string to index; itos stands for index to string
+    orig_lang, gen_lang = [], []
+    for batch in train_loader:
+        # batch.text: tuple of (sentences, sentence lengths)
+        orig_lang.extend(fields['text'][1].reverse(batch.text[0]))
+        stims, labels, _, _ = get_inputs(batch)
+        gen_ids = (teacher.sample(stims, labels, **kwargs))
+        gen_lang.extend(fields['text'][1].reverse(gen_ids[0]))
+    df = pd.DataFrame(list(zip(stims, orig_lang, gen_lang)), columns=['stims', 'orig_lang', 'gen_lang'])
+    df.to_csv(os.path.join(args.out_dir, model_id, 'language_samples.csv'), index=False)
+    breakpoint()
+    '''
     # plot loss over time
     plt.figure()
     plt.plot(range(args.epochs), losses[:, 0], '-', label='train')
@@ -379,7 +430,8 @@ if __name__ == "__main__":
     plt.savefig(os.path.join(args.out_dir, model_id, 'loss.png'))
 
     print("Loading best model from disk ...")
-    student = load_student_checkpoint(os.path.join(args.out_dir, model_id, 'model_weights', 'model_best.pth.tar'), use_cuda=args.cuda)
+    teacher = load_student_checkpoint(os.path.join(args.out_dir, model_id, 'model_weights', 'model_best.pth.tar'), use_cuda=args.cuda)
     train(best_epoch, False)
     val()
+    '''
 

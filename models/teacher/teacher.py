@@ -11,9 +11,8 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pack_padded_sequence
 import torchvision.models as models
 
-from models.student.lfl.language.bi_lstm import BiLSTM
-from models.student.lfl.language.self_attention import SelfAttention
 from models.student.lfl.mlp import MLP
+from models.teacher.language.rnn_decoder import RNNDecoder
 
 class Teacher(nn.Module):
     """ Teacher takes a concept (a set of images/feature vectors labeled as positive or negative)
@@ -24,23 +23,8 @@ class Teacher(nn.Module):
             and the stimulus model.
         """
         super(Teacher, self).__init__()
-        # if kwargs['language_model_type'] == 'bilstm':
-        #    self.languageModel = BiLSTM(
-        #         h_dim=kwargs['h_dim_l'],
-        #         o_dim=kwargs['o_dim_l'],
-        #         d_prob=kwargs['d_prob_l'],      
-        #         with_self_att=kwargs['with_self_att'],      
-        #         d_dim=kwargs['d_dim_l'],      
-        #         r_dim=kwargs['r_dim_l'],      
-        #         num_layers=kwargs['num_layers_l'],      
-        #         embeddings=kwargs['embeddings'],
-        #         concept_vocab_field=kwargs['concept_vocab_field'],
-        #         ref_vocab_field=kwargs['reference_vocab_field'],
-        #         task=kwargs['task']
-        #     )
-        # else:
-        #     raise Exception('Invalid Language Model')
         
+        self.decoder = RNNDecoder(**kwargs)
         ### Either way, stimModel outputs an embedded representation of the its inputs
         if kwargs['stim_model_type'] == 'featureMLP':
             ### Indicates that we're using vectorized features
@@ -85,7 +69,13 @@ class Teacher(nn.Module):
             language: (batch_size, max_lang_length)
             lang_lengths: (batch_size)
         """
-        # Create representations of stimuli
+        pos_prototypes, neg_prototypes = self.get_prototypes(stims, labels)
+        hidden_input = torch.cat((pos_prototypes, neg_prototypes), dim=1)
+        logits = self.decoder(hidden_input, language, lang_lengths)
+        return logits
+
+    def get_prototypes(self, stims, labels):
+    # Create representations of stimuli
         batch_size, num_examples, num_features = stims.shape
         stims_flat = stims.view(batch_size*num_examples, num_features)
         stim_reps_flat = self.stimModel(stims_flat)
@@ -102,23 +92,17 @@ class Teacher(nn.Module):
         pos_prototypes = pos_prototypes.squeeze(dim = 2)
         neg_prototypes = torch.bmm(stim_reps, 1-labels_mat)
         neg_prototypes = neg_prototypes.squeeze(dim = 2)
-        breakpoint()
         ### n_pos: number of positive examples of a concept (i.e. number of 1 labels)
         n_pos = labels.sum(dim = 1) # (batch_size)
         pos_prototypes = pos_prototypes / n_pos.unsqueeze(1).expand_as(pos_prototypes) # same dimension
         n_neg = (1 - labels).sum(dim = 1)
         neg_prototypes = neg_prototypes / n_neg.unsqueeze(1).expand_as(pos_prototypes)
-    
+        return pos_prototypes, neg_prototypes
         
-        # Form representation of concept from stimuli
-        # Eventually to be done with attention, but for now just uses averages
-        # TODO average 
-        
-        logits = self.mlp(joinedRep)
-        return logits, alphas
-
-
-        # joinedRep = torch.cat([languageRep, stimRep], dim=1) 
-        ### above, dim is the concatenating dimension;
-        ### in this case, dim 0 is likely batches, so dim 1 is the reps themselves
-        # languageRep, alphas = self.languageModel(x1, x1_lengths)
+    def sample(self, stims, labels, **kwargs):
+        pos_prototypes, neg_prototypes = self.get_prototypes(stims, labels)
+        hidden_input = torch.cat((pos_prototypes, neg_prototypes), dim=1)
+        indices = dict(sos=kwargs['start_index'],
+                       eos=kwargs['end_index'],
+                       pad=kwargs['pad_index'])
+        return self.decoder.sample(hidden_input, indices)

@@ -1,8 +1,8 @@
 """
-File: concept_load_dataset.py
-Author: Sahil Chopra (schopra8@stanford.edu)
-Date: February 22, 2019
-Description: Load dataset using TorchText.
+File: concept_load_dataset_teacher.py
+Author: Will Schwarzer (schwarzerw@carleton.edu)
+Date: July 8, 2019
+Description: Load dataset using TorchText, such that each row is a single concept
 """
 import os
 import re
@@ -30,9 +30,7 @@ def tokenize_fct_lemmatize(text):
     return [tok.lemma_ for tok in nlp.tokenizer(text)]  
 
 def tokenize_binary_string(string):
-    return [char for char in string]
-
-
+    return [int(char) for char in string]
 
 def construct_field(
     field_type,
@@ -44,14 +42,7 @@ def construct_field(
 ):
     ### batch_first: creates tensors with batch as the first dimension 
     ### (i.e. when outputting through iterator)
-    ### TODO ask Jesse why we aren't lemmatizing (shouldn't that usually be a good idea, 
-    ### esp. to avoid overfitting? is this a special case for the simple language required here?)
 
-    ### NOTE: NestedField might be exactly what we want for sample reps in a concept
-    ### Alternatively, the option of concatenating the feature labels in pd
-    ### and then telling ttext that it's a sequential field with use_vocab = false
-    ### should work (telling ttext that it's sequential means that it will be tokenized,
-    ### which is what we want; we'll just have to define a special tokenizer function)
     """ Construct TorchText field.
 
         Note: the `input_<x>` fields are specifically parameters for
@@ -101,7 +92,7 @@ def construct_field(
         )
     elif field_type == 'binary_string':
         return Field(
-            use_vocab=True,
+            use_vocab=False,
             batch_first=batch_first,
             sequential = True,
             tokenize = tokenize_binary_string
@@ -130,7 +121,6 @@ def load_dataset(file_template, lemmatized=False):
         else:
             column_field_types[c] = (c, construct_field('binary_string'))
             
-    ### Why are we throwing away the test data? (answered)
     train = TabularDataset(train_file, format='tsv', fields=column_field_types)
     val = TabularDataset(val_file, format='tsv', fields=column_field_types)
     test = TabularDataset(val_file, format='tsv', fields=column_field_types)
@@ -151,7 +141,6 @@ def load_dataset_old(file_template, lemmatized=False):
     train_file = file_template.format('train')
     val_file = file_template.format('val')
     test_file = file_template.format('test')
-    breakpoint()
     ### Read in the labels of the columns as a list
     columns = pd.read_csv(test_file, sep='\t').columns.values.tolist()
     ### Dict of fields (torchtext types for columns of tabular dataset, implying how to preprocess them)
@@ -234,14 +223,14 @@ def gen_text_preprocessor():
     return data.Pipeline(clean_str)
 
 
-def construct_stim_reps(batch, stim_fields):
+def construct_stim_reps(batch):
     """ Construct stimulus representations for batch.
     """
     ### Appends all of the different features together into one column
     vals = []
-    for f in stim_fields:
-        vals.append(batch.__dict__[f].unsqueeze(dim=1)) ### (batch_size, 1)
-        breakpoint()
+    num_examples = batch.__dict__['labels'].shape[1]
+    for i in range(num_examples):
+        vals.append(batch.__dict__[str(i)].unsqueeze(dim=1)) ### (batch_size, 1)
         ### I mean, really it's a length num_feats list of length batch_size tensors
     stims = torch.cat(vals, dim=1)
     ### convert entire tensor into floats
