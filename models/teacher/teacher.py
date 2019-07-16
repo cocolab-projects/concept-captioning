@@ -105,4 +105,4 @@ class Teacher(nn.Module):
         indices = dict(sos=kwargs['start_index'],
                        eos=kwargs['end_index'],
                        pad=kwargs['pad_index'])
-        return self.decoder.sample(hidden_input, indices)
+        return self.decoder.sample(hidden_input, indices, greedy=kwargs['greedy_sampling'])

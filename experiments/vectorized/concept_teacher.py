@@ -91,6 +91,8 @@ if __name__ == "__main__":
                         help='where to save models')
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
+    parser.add_argument('--greedy', action='store_true', default=False,
+                        help='enables greedy language sampling')
     args = parser.parse_args()
     args.cuda = args.cuda and torch.cuda.is_available()
     ### print(torch.cuda.is_available())
@@ -188,7 +190,9 @@ if __name__ == "__main__":
         'unk_index': fields['text'][1].vocab.stoi[Constants.UNK_TOKEN],
         'pad_index': fields['text'][1].vocab.stoi[Constants.PAD_TOKEN],
         'start_index': fields['text'][1].vocab.stoi[Constants.START_TOKEN],
-        'end_index': fields['text'][1].vocab.stoi[Constants.END_TOKEN]
+        'end_index': fields['text'][1].vocab.stoi[Constants.END_TOKEN],
+
+        'greedy_sampling': True
     }
 
     with open(os.path.join(model_ids_dir, '{}.json'.format(kwargs['model_id'])), 'w') as model_params_f:
@@ -271,7 +275,6 @@ if __name__ == "__main__":
             language = language.to('cuda')
             lang_lengths = lang_lengths.to('cuda')
             labels = labels.to('cuda')
-        breakpoint()
         orig_lang = fields['text'][1].reverse(language)
         return stims, labels, language, lang_lengths
 
@@ -380,7 +383,7 @@ if __name__ == "__main__":
         train_loss = train(epoch)
         val_loss = val()
         losses[epoch - 1, 0] = train_loss
-        #losses[epoch - 1, 1] = val_loss
+        losses[epoch - 1, 1] = val_loss
 
         # keep track of best weights -- this is equivalent
         # to a simple version of early-stopping
@@ -410,17 +413,27 @@ if __name__ == "__main__":
     '''
     ### TODO why are so many words mapping to the unknown character?
     ### NOTE stoi stands for string to index; itos stands for index to string
-    orig_lang, gen_lang = [], []
+    orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
     for batch in train_loader:
         # batch.text: tuple of (sentences, sentence lengths)
-        orig_lang.extend(fields['text'][1].reverse(batch.text[0]))
-        stims, labels, _, _ = get_inputs(batch)
-        gen_ids = (teacher.sample(stims, labels, **kwargs))
+        stims, labels, language, _ = get_inputs(batch)
+        orig_lang.extend(fields['text'][1].reverse(language))
+        gen_ids = teacher.sample(stims, labels, **kwargs)
+        gen_lang_greedy.extend(fields['text'][1].reverse(gen_ids[0]))
+        kwargs['greedy_sampling'] = False
+        gen_ids = teacher.sample(stims, labels, **kwargs)
         gen_lang.extend(fields['text'][1].reverse(gen_ids[0]))
-    df = pd.DataFrame(list(zip(stims, orig_lang, gen_lang)), columns=['stims', 'orig_lang', 'gen_lang'])
+        kwargs['greedy_sampling'] = True
+        stims_list.extend(stims.tolist())
+        pos_prototypes, neg_prototypes = teacher.get_prototypes(stims, labels)
+        pos_list.extend(pos_prototypes.tolist())
+        neg_list.extend(neg_prototypes.tolist())
+    df = pd.DataFrame(
+        list(zip(stims_list, orig_lang, gen_lang_greedy, gen_lang, pos_list, neg_list)), 
+        columns=['stims', 'orig_lang', 'gen_lang_greedy', 'gen_lang', 'pos_prototypes', 'neg_prototypes'])
     df.to_csv(os.path.join(args.out_dir, model_id, 'language_samples.csv'), index=False)
     breakpoint()
-    '''
+    
     # plot loss over time
     plt.figure()
     plt.plot(range(args.epochs), losses[:, 0], '-', label='train')
@@ -429,6 +442,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.savefig(os.path.join(args.out_dir, model_id, 'loss.png'))
 
+    '''
     print("Loading best model from disk ...")
     teacher = load_student_checkpoint(os.path.join(args.out_dir, model_id, 'model_weights', 'model_best.pth.tar'), use_cuda=args.cuda)
     train(best_epoch, False)
