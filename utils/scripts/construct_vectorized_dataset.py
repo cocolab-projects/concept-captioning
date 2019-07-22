@@ -230,9 +230,13 @@ def gen_text_preprocessor(type):
         concat_msgs = concat_msgs.reset_index()
         return concat_msgs
 
-    def all_msgs(msgs, refGames=False):
+    def all_msgs(msgs, refGames=False, speaker_only=False):
         if refGames:
+            if speaker_only:
+                msgs = msgs[msgs['sender'] == 'speaker']
             group = msgs.groupby(['example_id'])
+            ### TODO concat with different char than just a space?
+            ### Like a period and space
             concat_msgs = pd.DataFrame(group['message'].apply(' '.join))
         concat_msgs = concat_msgs.reset_index()
         return concat_msgs
@@ -253,7 +257,11 @@ def preprocess_text(dirs, type, input, output, refGames=False):
         output_file = os.path.join(d, output)
         text = pd.read_csv(input_file, sep='\t')
         preprocessor = gen_text_preprocessor(type)
-        text_preprocessed = preprocessor(text, refGames=refGames)
+        ### split up now because only all_msgs has the speaker_only option
+        if type == "all_msgs":
+            text_preprocessed = preprocessor(text, refGames=True, speaker_only=True)
+        else:
+            text_preprocessed = preprocessor(text, refGames=refGames)
         text_preprocessed.to_csv(output_file, sep='\t', index=False)
 
 
@@ -309,9 +317,9 @@ class ReferenceDataset():
             and 2 outputs (gold truth, listener selection).
         """
         dirs = ['./data/reference/{}/train'.format(data_dir), './data/reference/{}/val'.format(data_dir), './data/reference/{}/test'.format(data_dir)]
-        preprocess_text(dirs, 'all_msgs', 'msgs.tsv', 'msgs_concat.tsv', refGames=True)
+        preprocess_text(dirs, 'all_msgs', 'msgs.tsv', 'msgs_concat_speaker_only.tsv', refGames=True)
         for d in dirs:
-            msgs = pd.read_csv(os.path.join(d, 'msgs_concat.tsv'), sep='\t')
+            msgs = pd.read_csv(os.path.join(d, 'msgs_concat_speaker_only.tsv'), sep='\t')
 
             # Produce table of stimuli responses for a specific stimuli and conversation.
             responses = pd.read_csv(os.path.join(d, 'responses.tsv'), sep='\t')[['example_id', 'selection']]
@@ -330,9 +338,9 @@ class ReferenceDataset():
 
 
 def main():
-    # data_dir = 'pilot_coll1'
-    # referenceSetup(data_dir)
-    # ReferenceDataset.construct_dataset(data_dir)
+    data_dir = 'pilot_coll1'
+    #referenceSetup(data_dir)
+    ReferenceDataset.construct_dataset(data_dir)
     # conceptSetup()
     # ConceptDataset.construct_concat_informative_dataset()
 

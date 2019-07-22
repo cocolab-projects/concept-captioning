@@ -100,7 +100,7 @@ def construct_field(
     else:
         raise Exception('Invalid Field Type')
 
-def load_dataset(file_template, lemmatized=False):
+def load_dataset(file_template, lemmatized):
     """ Read text components of dataset into memory and preprocess accordingly.
     @param file_template: './data/xsd/{}/data.tsv' -- file path except for train/val/test 
     """

@@ -78,12 +78,12 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--data', type=str, default='./data/concept/{}/vectorized/concept_dataset.tsv',
+    parser.add_argument('--data', type=str, default='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
                         help='file template for dataset')
     parser.add_argument('--bn', action='store_true', default=False,
                         help='use batch normalization')
     parser.add_argument('--embeddings', type=str, default='glove',
-                        help='embeddings to utilize')
+                        help='embeddings to use')
     #  parser.add_argument('--out-dir', type=str, default='/mnt/fs5/schopra/ratchet/lfl/student/concept/models',
                         #  help='where to save models')
     # XXX: On the cocolab cluster set this to an /mnt/fsX directory!
@@ -93,6 +93,8 @@ if __name__ == "__main__":
                         help='enables CUDA training')
     parser.add_argument('--greedy', action='store_true', default=False,
                         help='enables greedy language sampling')
+    parser.add_argument('--lemmatized', type=bool, default=True,
+                        help='enables or disables lemmatization for tokenization')
     args = parser.parse_args()
     args.cuda = args.cuda and torch.cuda.is_available()
     ### print(torch.cuda.is_available())
@@ -124,7 +126,7 @@ if __name__ == "__main__":
     ### {}_data is a TabularDataset (torchtext.data object)
 
     ### fields is column_field_types, which was also set to be the "fields" variable of {}_data
-    train_data, val_data, test_data, fields, stim_fields = load_dataset(args.data)
+    train_data, val_data, test_data, fields, stim_fields = load_dataset(args.data, args.lemmatized)
     sort_key = lambda x: len(x.text)
     if args.cuda:
         # GPU available
@@ -278,6 +280,32 @@ if __name__ == "__main__":
         orig_lang = fields['text'][1].reverse(language)
         return stims, labels, language, lang_lengths
 
+    def get_samples_and_prototypes(val=False):
+        if val:
+            loader = val_loader
+        else: 
+            loader = train_loader
+        ### TODO why are so many words mapping to the unknown character?
+        ### NOTE stoi stands for string to index; itos stands for index to string
+        orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
+        for batch in loader:
+            stims, labels, language, _ = get_inputs(batch)
+            orig_lang.extend(fields['text'][1].reverse(language))
+            gen_ids = teacher.sample(stims, labels, **kwargs)
+            gen_lang_greedy.extend(fields['text'][1].reverse(gen_ids[0]))
+            kwargs['greedy_sampling'] = False
+            gen_ids = teacher.sample(stims, labels, **kwargs)
+            gen_lang.extend(fields['text'][1].reverse(gen_ids[0]))
+            kwargs['greedy_sampling'] = True
+            stims_list.extend(stims.tolist())
+            pos_prototypes, neg_prototypes = teacher.get_prototypes(stims, labels)
+            pos_list.extend(pos_prototypes.tolist())
+            neg_list.extend(neg_prototypes.tolist())
+        df = pd.DataFrame(
+            list(zip(stims_list, orig_lang, gen_lang_greedy, gen_lang, pos_list, neg_list)), 
+            columns=['stims', 'orig_lang', 'gen_lang_greedy', 'gen_lang', 'pos_prototypes', 'neg_prototypes'])
+        return df
+            
 
     def train(epoch=-1, backprop=True):
         """ Train model for a single epoch.
@@ -411,28 +439,10 @@ if __name__ == "__main__":
             'model_best.pth.tar'
         )
     '''
-    ### TODO why are so many words mapping to the unknown character?
-    ### NOTE stoi stands for string to index; itos stands for index to string
-    orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
-    for batch in train_loader:
-        # batch.text: tuple of (sentences, sentence lengths)
-        stims, labels, language, _ = get_inputs(batch)
-        orig_lang.extend(fields['text'][1].reverse(language))
-        gen_ids = teacher.sample(stims, labels, **kwargs)
-        gen_lang_greedy.extend(fields['text'][1].reverse(gen_ids[0]))
-        kwargs['greedy_sampling'] = False
-        gen_ids = teacher.sample(stims, labels, **kwargs)
-        gen_lang.extend(fields['text'][1].reverse(gen_ids[0]))
-        kwargs['greedy_sampling'] = True
-        stims_list.extend(stims.tolist())
-        pos_prototypes, neg_prototypes = teacher.get_prototypes(stims, labels)
-        pos_list.extend(pos_prototypes.tolist())
-        neg_list.extend(neg_prototypes.tolist())
-    df = pd.DataFrame(
-        list(zip(stims_list, orig_lang, gen_lang_greedy, gen_lang, pos_list, neg_list)), 
-        columns=['stims', 'orig_lang', 'gen_lang_greedy', 'gen_lang', 'pos_prototypes', 'neg_prototypes'])
-    df.to_csv(os.path.join(args.out_dir, model_id, 'language_samples.csv'), index=False)
-    breakpoint()
+    train_samples = get_samples_and_prototypes(val=False)
+    train_samples.to_csv(os.path.join(args.out_dir, model_id, 'samples_train.csv'), index=False)
+    val_samples = get_samples_and_prototypes(val=True)
+    val_samples.to_csv(os.path.join(args.out_dir, model_id, 'samples_val.csv'), index=False)
     
     # plot loss over time
     plt.figure()

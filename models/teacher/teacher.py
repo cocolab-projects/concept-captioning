@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pack_padded_sequence
 import torchvision.models as models
+import numpy as np
 
 from models.student.lfl.mlp import MLP
 from models.teacher.language.rnn_decoder import RNNDecoder
@@ -74,8 +75,18 @@ class Teacher(nn.Module):
         logits = self.decoder(hidden_input, language, lang_lengths)
         return logits
 
-    def get_prototypes(self, stims, labels):
-    # Create representations of stimuli
+    ### TODO actual statistical bootstrapping?
+    def get_prototypes(self, stims, labels, bootstrap=False, boot_max_size_mlt=2):
+        '''
+        bootstrap: whether or not to generate the positive/negative examples by
+        sampling with replacement
+        boot_max_size_mlt: determines the maximum number of positive or negative
+        examples to have (n_pos*boot_max_size_mlt, etc.)
+        '''
+
+
+
+        # Create representations of stimuli
         batch_size, num_examples, num_features = stims.shape
         stims_flat = stims.view(batch_size*num_examples, num_features)
         stim_reps_flat = self.stimModel(stims_flat)
@@ -85,6 +96,12 @@ class Teacher(nn.Module):
         # stim_reps: (batch_size, num_examples, rep_length)
         stim_reps = stim_reps.permute(0, 2, 1)
         # stim_reps: (batch_size, rep_length, num_examples)
+
+        if bootstrap:
+            n_pos = labels.sum(dim=1)
+            n_pos_samples = np.random.randint(1, n_pos)
+
+
         labels_mat = labels.unsqueeze(dim = 2)
         # labels: (batch_size, num_examples, 1)
         ### bmm: stands for batch matrix multiplication

@@ -6,26 +6,50 @@ Description: Create dataset with samples grouped into individual concepts.
 """
 import pandas as pd
 
-DATA_DIR = "./data/concept/{}/vectorized/"
-ORIG_TSV_NAME = "concat_informative_dataset.tsv"
-NEW_TSV_NAME = "concept_dataset.tsv"
+DATA_DIR = "./data/{}/{{}}/vectorized/"
+ORIG_TSV_NAME_CONCEPT = "concat_informative_dataset.tsv"
+ORIG_TSV_NAME_REF = "dataset.tsv"
+NEW_TSV_NAME_CONCEPT = "concept_dataset.tsv"
+NEW_TSV_NAME_REF = "ref_dataset.tsv"
+NEW_TSV_NAME_CONCEPT_UNIQUE = "unique_concept_dataset.tsv"
 
 
-def main():
+def main_concept():
     """
     Creates all concept tsv files.
     """
-    create_tsv(DATA_DIR.format("train"), ORIG_TSV_NAME)
-    create_tsv(DATA_DIR.format("test"), ORIG_TSV_NAME)
-    create_tsv(DATA_DIR.format("val"), ORIG_TSV_NAME)
+    data_dir = DATA_DIR.format("concept")
+    create_tsv(data_dir.format("train"), ORIG_TSV_NAME_CONCEPT, ref=False)
+    create_tsv(data_dir.format("test"), ORIG_TSV_NAME_CONCEPT, ref=False)
+    create_tsv(data_dir.format("val"), ORIG_TSV_NAME_CONCEPT, ref=False)
 
-def create_tsv(data_dir, orig_tsv_name):
+def main_ref():
     """
-    Creates an individual concept df from the df in orig_tsv_name and writes it
-    to data_dir.
+    Creates all ref tsv files.
     """
-    concept_df = create_concept_df(data_dir + orig_tsv_name)
-    concept_df.to_csv(data_dir + NEW_TSV_NAME, sep="\t", index=False)
+    data_dir = DATA_DIR.format("reference/pilot_coll1")
+    create_tsv(data_dir.format("train"), ORIG_TSV_NAME_REF, ref=True)
+    create_tsv(data_dir.format("test"), ORIG_TSV_NAME_REF, ref=True)
+    create_tsv(data_dir.format("val"), ORIG_TSV_NAME_REF, ref=True)
+
+
+def create_tsv(data_dir, orig_tsv_name, ref=False, unique_concepts=True):
+    """
+    Creates a dataset of concepts or reference games such that each stimulus rep
+    is its own column
+    If unique_concepts is true, then the concept dataset only has one description per concept
+    """
+    if ref:
+        df = create_ref_df(data_dir + orig_tsv_name)
+        new_tsv_name = NEW_TSV_NAME_REF
+    else:
+        if unique_concepts:
+            df = create_unique_concept_df(data_dir + orig_tsv_name)
+            new_tsv_name = NEW_TSV_NAME_CONCEPT_UNIQUE
+        else:
+            df = create_concept_df(data_dir + orig_tsv_name)
+            new_tsv_name = NEW_TSV_NAME_CONCEPT
+    df.to_csv(data_dir + new_tsv_name, sep='\t', index=False)
 
 def create_concept_df(orig_tsv):
     df = pd.read_csv(orig_tsv, sep="\t")
@@ -48,6 +72,16 @@ def create_concept_df(orig_tsv):
     cols = pivot.columns.tolist()
     pivot = pivot[cols[-2:] + cols[:-2]]
     return pivot
+
+def create_unique_concept_df(orig_tsv):
+    '''
+    Creates a dataset of concepts where no concept is repeated
+    (In the original dataset each concept is described ~10 times)
+    '''
+    pivot = create_concept_df(orig_tsv)
+    stim_cols = [col for col in pivot if type(col)==int]
+    unique_concepts_pivot = pivot.drop_duplicates(subset=stim_cols, keep='first')
+    return unique_concepts_pivot
 
 def create_concept_df_all_labels(orig_tsv):
     df = pd.read_csv(orig_tsv, sep="\t")
@@ -82,6 +116,31 @@ def create_concept_df_all_labels(orig_tsv):
     pivot = pivot[cols[-5:] + cols[:-5]]
     return pivot
 
+def create_ref_df(orig_tsv):
+    '''
+    Creates a reference game dataset of an identical format to the concept dataset
+    created above: each stimulus is a single column, in addition to one column for the text,
+    and one column for the labels (which in this case are all precisely 001)
+    '''
+    df = pd.read_csv(orig_tsv, sep='\t')
+    distr1_cols = [col for col in df if 'distr1' in col]
+    df['distr1'] = df[distr1_cols].apply(lambda x: ''.join(x.astype(str)),
+                                         axis=1)
+    distr2_cols = [col for col in df if 'distr2' in col]
+    df['distr2'] = df[distr2_cols].apply(lambda x: ''.join(x.astype(str)),
+                                         axis=1)
+    target_cols = [col for col in df if 'target' in col]
+    df['target'] = df[target_cols].apply(lambda x: ''.join(x.astype(str)),
+                                         axis=1)
+    df['labels'] = '001'
+    # XXX Remove weird tildes
+    df['message'] = df['message'].apply(lambda x: x.replace('~', ''))
+    # Remove extraneous stimulus columns and reorder
+    df = df[['message', 'labels', 'distr1', 'distr2', 'target']]
+    # Rename to match concept dataset
+    df = df.rename(columns=dict(message='text', distr1=0, distr2=1, target=2))
+    return df
 
 if __name__ == '__main__':
-    main()
+    # main_concept()
+    main_ref()

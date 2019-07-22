@@ -4,7 +4,7 @@ import torch.nn.utils.rnn as rnn_utils
 import numpy as np
 import torch.nn.functional as F
 
-MAX_SEQ_LEN = 20  # Maximum decoded sequence length
+MAX_SEQ_LEN = 500  # Maximum decoded sequence length
 
 class RNNDecoder(nn.Module):
     """
@@ -112,9 +112,9 @@ class RNNDecoder(nn.Module):
         ### shape: (batch_size, max seq length, hidden dim)
 
         # Sort the language back in the order we saw earlier
-        if batch_size > 1:
-            _, reversed_idx = torch.sort(sorted_idx)
-            output = output[reversed_idx]
+        # if batch_size > 1:
+        _, reversed_idx = torch.sort(sorted_idx)
+        output = output[reversed_idx]
 
         max_length = output.size(1)
         # Now we're going to "unfold" the hidden states. Previously they were of shape (lang_len, batch, hidden_dim),
