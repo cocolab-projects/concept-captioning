@@ -22,7 +22,7 @@ class RNNDecoder(nn.Module):
         """
         super(RNNDecoder, self).__init__()
         # Stores embeddings in self.embedding
-        self.build_embeddings(kwargs['concept_vocab_field'])
+        self.build_embeddings(kwargs['vocab_field'])
         self.vocab_size = self.embedding.num_embeddings
         # Initialize hidden/cell initializers
         # o_dim_s: dimensions of stimulus representation (*2 since we concatenate two of them)

@@ -75,7 +75,6 @@ class Teacher(nn.Module):
         logits = self.decoder(hidden_input, language, lang_lengths)
         return logits
 
-    ### TODO actual statistical bootstrapping?
     def get_prototypes(self, stims, labels, bootstrap=False, boot_max_size_mlt=2):
         '''
         bootstrap: whether or not to generate the positive/negative examples by
@@ -83,7 +82,7 @@ class Teacher(nn.Module):
         boot_max_size_mlt: determines the maximum number of positive or negative
         examples to have (n_pos*boot_max_size_mlt, etc.)
         '''
-
+        
 
 
         # Create representations of stimuli

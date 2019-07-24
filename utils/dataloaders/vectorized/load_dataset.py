@@ -100,7 +100,7 @@ def construct_field(
     else:
         raise Exception('Invalid Field Type')
 
-def load_dataset(file_template, lemmatized):
+def load_dataset(file_template, lemmatized, text_field = None):
     """ Read text components of dataset into memory and preprocess accordingly.
     @param file_template: './data/xsd/{}/data.tsv' -- file path except for train/val/test 
     """
@@ -114,18 +114,20 @@ def load_dataset(file_template, lemmatized):
     ### Dict of fields (torchtext types for columns of tabular dataset, implying how to preprocess them)
     ### Of type (str, field)
     column_field_types = {}
-    stim_fields = []
+    if text_field is None:
+        text_field = construct_field('input_text', lemmatized=lemmatized)
     for c in columns:
         if c == 'text':
-            column_field_types[c] = (c, construct_field('input_text', lemmatized=lemmatized))
+            column_field_types[c] = (c, text_field)
         else:
             column_field_types[c] = (c, construct_field('binary_string'))
             
     train = TabularDataset(train_file, format='tsv', fields=column_field_types)
     val = TabularDataset(val_file, format='tsv', fields=column_field_types)
-    test = TabularDataset(val_file, format='tsv', fields=column_field_types)
+    test = TabularDataset(test_file, format='tsv', fields=column_field_types)
 
-    return train, val, test, column_field_types, stim_fields
+    # Not returning test file yet (saving that for the end of the experiment)
+    return train, val, column_field_types
 
 ### Note: we're using torchtext for its torchtext.data ("data") library
 ### Apparently torchtext is a "text preprocessing" library, designed to work with any DL library

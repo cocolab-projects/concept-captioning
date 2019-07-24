@@ -6,6 +6,7 @@ Date: July 15, 2019
 Description: Trains a concept encoder (MLP for vectorized concepts or CNN for
 images) and decoder (LSTM).
 """
+import ast
 import uuid
 import json
 import matplotlib
@@ -18,16 +19,22 @@ import time
 
 from models.teacher.teacher import Teacher
 from utils.constants import Constants
-from utils.dataloaders.vectorized.concept_load_dataset_teacher import load_dataset, construct_stim_reps, construct_y, convert_to_elmo_ids
+from utils.dataloaders.vectorized.load_dataset import load_dataset, construct_stim_reps, construct_y, convert_to_elmo_ids
 from experiments.utils import AverageMeter, AccuracyMeter, save_student_checkpoint, set_seeds
 from experiments.utils import load_single_task_student_checkpoint as load_student_checkpoint
 
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-import torchtext.data as data
+import torchtext.data as ttdata
 import pandas as pd
 from tqdm import tqdm
+
+VALID_DATASETS = ['unique_concept', 'concept', 'ref']
+DEFAULT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
+                         concept='./data/concept/{}/vectorized/concept_dataset.tsv',
+                         ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
+DEFAULT_B_SIZES = dict(unique_concept=12, concept=32, ref=32)
 
 
 if __name__ == "__main__":
@@ -70,16 +77,18 @@ if __name__ == "__main__":
 
     parser.add_argument('--train-obj', type=str, default='ground_truth',
                         help='ground_truth, teacher, student')
-    parser.add_argument('--batch-size', type=int, default=32, metavar='N',
-                        help='input batch size for training')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train')
+    parser.add_argument('--batch-sizes', type=ast.literal_eval, default=DEFAULT_B_SIZES, metavar='N',
+                        help='input batch size for training'
+                        ' input in the form of a Python dict: one size for each dataset'
+                        ' (see help for the --datasets option)')
+    parser.add_argument('--epochs', type=int, nargs='+', default=[10], metavar='N',
+                        help='number of epochs to train'
+                       ' (input one value for each dataset or one value total'
+                       ' to be applied to every dataset)')
     parser.add_argument('--lr', type=float, default=3e-4, metavar='LR',
                         help='learning rate')
     parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--data', type=str, default='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
-                        help='file template for dataset')
     parser.add_argument('--bn', action='store_true', default=False,
                         help='use batch normalization')
     parser.add_argument('--embeddings', type=str, default='glove',
@@ -95,16 +104,32 @@ if __name__ == "__main__":
                         help='enables greedy language sampling')
     parser.add_argument('--lemmatized', type=bool, default=True,
                         help='enables or disables lemmatization for tokenization')
+
+    parser.add_argument('--data', type=str, nargs='+', default=['concept'],
+                        help='which data to train on, in which order (ref or concept)')
+    # This argument is a bit tricky: the idea is that Python can parse strings
+    # as Python literals (including dicts) with the ast.literal_eval function
+    parser.add_argument('--datapaths', type=ast.literal_eval, 
+                        default=DEFAULT_DATAPATHS,
+                        help='paths to data files; input as python dict notation'
+                        'for each dataset specified in --data'
+                        'NOTE: only use single quote marks in the dict')
     args = parser.parse_args()
     args.cuda = args.cuda and torch.cuda.is_available()
     ### print(torch.cuda.is_available())
     ### print(args.cuda)
 
+
+    # Argument post-processing
+    if len(args.batch_sizes) == 1:
+        args.batch_sizes = args.batch_sizes * len(args.data)
+    if len(args.epochs) == 1:
+        args.epochs = args.epochs * len(args.data)
+
+
     # Model IDs
-    ### Note: stored in repo/saves/model_ids
-    ### Models are stored in repo/saves/models, in folders with their id as the name
-    ### TODO what is the .pkl file that they use? RESOLVED apparently it's a pickle file, so like a stored python object
-    ### So (trained/untrained?) models are just objects
+    ### Note: stored in ./saves/model_ids
+    ### Models are stored in ./saves/models, in folders with their id as the name
     model_id = str(uuid.uuid4())
     model_ids_dir = os.path.join(args.out_dir, 'model_ids')
     if not os.path.isdir(model_ids_dir):
@@ -114,11 +139,14 @@ if __name__ == "__main__":
     ### Sets all RNG seeds with some fixed value
     set_seeds()
 
-    ### Makes folder to put models in
+    ### Makes folder to put model in
     args.out_dir = os.path.join(args.out_dir, 'models')
     if not os.path.isdir(os.path.join(args.out_dir, model_id)):
         os.makedirs(os.path.join(args.out_dir, model_id))
 
+    # Check validity of datasets argument
+    assert all([dataset in VALID_DATASETS for dataset in args.data]), \
+            "Unknown dataset in --data option!"
     # Construct Data Loaders &  Iterators
     ### Default args.data is /data/concept/{}/vectorized/concat_informative_dataset
     ### (.tsv is just tab-separated-value, i.e. like csv, so just a table)
@@ -126,37 +154,44 @@ if __name__ == "__main__":
     ### {}_data is a TabularDataset (torchtext.data object)
 
     ### fields is column_field_types, which was also set to be the "fields" variable of {}_data
-    train_data, val_data, test_data, fields, stim_fields = load_dataset(args.data, args.lemmatized)
-    sort_key = lambda x: len(x.text)
-    if args.cuda:
-        # GPU available
-        ### data is torchtext.data
-        ### Iterator.splits() creates iterators (essentially DataLoaders, except for TabularDatasets, AFAIK) for multiple splits
-        train_loader, val_loader = data.Iterator.splits(
-                (train_data, val_data), sort_key=sort_key, sort_within_batch=True,
-                batch_sizes=(args.batch_size, args.batch_size), device=torch.device('cuda'))
-    else:
-        # CPU only
-        train_loader, val_loader = data.Iterator.splits(
-                (train_data, val_data), sort_key=sort_key, sort_within_batch=True,
-                batch_sizes=(args.batch_size, args.batch_size), device=torch.device('cpu'))
+    data = {}
+    train_data = []
+    # Use a constant text field to make sure vocabs are the same across datasets
+    text_field = None
+    for dataset in set(args.data):
+        train, val, fields = load_dataset(args.datapaths[dataset], 
+                                          args.lemmatized,
+                                          text_field=text_field)
+        train_data.append(train)
+        if args.cuda:
+            device = torch.device('cpu')
+        else:
+            device = torch.device('cuda')
+        train_loader, val_loader = ttdata.Iterator.splits(
+            (train, val), sort_key=lambda x: len(x.text), sort_within_batch=True,
+            batch_sizes=(args.batch_sizes[dataset], args.batch_sizes[dataset]), device=device)
 
+        data[dataset] = dict(train=train_loader, val=val_loader, fields=fields)
+        # Set text field to be the same as in the last dataset loaded
+        text_field = fields['text'][1]
 
-    # Construct vocabulary objects & write to disk
-    ### glove by default
-    ### builds the mapping from tokens to (well, initially I thought ints, but actually) representation vectors
-    ### also converts words to their vocab indices
-    ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
-    ### note: the (gigantic) vocab file is stored in .\.vector_cache
-    if args.embeddings == "glove":
-        fields['text'][1].build_vocab(train_data, vectors="glove.840B.300d")
-        torch.save(fields['text'][1], os.path.join(args.out_dir, model_id, 'vocab.pkl'), pickle_module=dill)
-    elif args.embeddings == "elmo":
-        fields['text'][1].build_vocab(train_data)
-        torch.save(fields['text'][1], os.path.join(args.out_dir, model_id, 'vocab.pkl'), pickle_module=dill)
-        print("Using ELMO's pre-trained embeddings")
-    else:
-        raise Exception("Invalid Embeddings Type")
+    for dataset in set(args.data):
+        # Construct vocabulary objects & write to disk
+        ### glove by default
+        ### builds the mapping from tokens to (well, initially I thought ints, but actually) representation vectors
+        ### also converts words to their vocab indices
+        ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
+        ### note: the (gigantic) vocab file is stored in .\.vector_cache
+        if args.embeddings == "glove":
+            vectors = "glove.840B.300d"
+        elif args.embeddings == "elmo":
+            # To be vectorized later
+            vectors = None
+        else:
+            raise Exception("Invalid Embeddings Type")
+        data[dataset]['fields']['text'][1].build_vocab(*train_data, vectors=vectors)
+        torch.save(fields['text'][1], os.path.join(args.out_dir, model_id, dataset+'_vocab.pkl'), pickle_module=dill)
+
   
     kwargs = {
         'language_model_type': 'bilstm',
@@ -187,8 +222,14 @@ if __name__ == "__main__":
         'embeddings': args.embeddings,
         'model_id': model_id,
         'date:': time.strftime("%Y-%m-%d %H:%M"),
-        'task': 'concept',
+        'data': args.data,
+        'batch_sizes': args.batch_sizes,
+        'epochs': args.epochs,
+        'lemmatized': args.lemmatized,
+        'datapaths': args.datapaths,
 
+        # XXX not that ugly, but note that fields is still from the last
+        # dataset in the for loop above
         'unk_index': fields['text'][1].vocab.stoi[Constants.UNK_TOKEN],
         'pad_index': fields['text'][1].vocab.stoi[Constants.PAD_TOKEN],
         'start_index': fields['text'][1].vocab.stoi[Constants.START_TOKEN],
@@ -197,11 +238,31 @@ if __name__ == "__main__":
         'greedy_sampling': True
     }
 
-    with open(os.path.join(model_ids_dir, '{}.json'.format(kwargs['model_id'])), 'w') as model_params_f:
-        json.dump(kwargs, model_params_f)
+    # Reality checking for vocab indices
+    ### TODO make this cleaner (or figure out how to set these indices manually?)
+    ### TODO assert that vocab vectors tensors are equal
+    assert all([dset['fields']['text'][1].vocab.itos == fields['text'][1].vocab.itos for dset in data.values()])
+    assert all([dset['fields']['text'][1].vocab.stoi[Constants.UNK_TOKEN] == \
+                kwargs['unk_index'] for dset in data.values()])
+    assert all([dset['fields']['text'][1].vocab.stoi[Constants.PAD_TOKEN] == \
+                kwargs['pad_index'] for dset in data.values()])
+    assert all([dset['fields']['text'][1].vocab.stoi[Constants.START_TOKEN] == \
+                kwargs['start_index'] for dset in data.values()])
+    assert all([dset['fields']['text'][1].vocab.stoi[Constants.END_TOKEN] == \
+                kwargs['end_index'] for dset in data.values()])
 
-    kwargs['concept_vocab_field'] = fields['text'][1]
-    kwargs['reference_vocab_field'] = None
+
+    with open(os.path.join(model_ids_dir, '{}.json'.format(kwargs['model_id'])), 'w') as id_f, \
+            open(os.path.join(args.out_dir, model_id, 'params.json'), 'w') as params_f:
+        # indent: when set to something besides None, enables pretty-printing
+        # of json file; the specific integer sets the tab size in num. spaces
+        json.dump(kwargs, params_f, indent=2)
+        json.dump(kwargs, id_f, indent=2)
+
+    # Arbitrarily add the last dataset's text field as the vocab field,
+    # since they're all the same (asserted above)
+    # (placing this code after the dump since the field isn't valid JSON)
+    kwargs['vocab_field'] = fields['text'][1]
 
     def compute_loss(batch):
         """ Compute loss.
@@ -307,7 +368,7 @@ if __name__ == "__main__":
         return df
             
 
-    def train(epoch=-1, backprop=True):
+    def train(epoch, train_loader, backprop=True):
         """ Train model for a single epoch.
         """
         ### Model is declared in global space 
@@ -319,8 +380,8 @@ if __name__ == "__main__":
         ### tqdm is a progress bar for iterations of a loop through an iterator
         ### generally you wrap the iterable in it, like tqdm(range), to automatically keep track of #iterations
         ### but you can also use pbar.update() to tell it to iterate manually
-        pbar = tqdm(total=len(train_loader))
         train_loader.init_epoch()
+        pbar = tqdm(total=len(train_loader))
         
         if backprop:
             ### Sets model in training mode
@@ -359,7 +420,7 @@ if __name__ == "__main__":
         return loss_meter.avg
 
 
-    def val():
+    def val(val_loader):
         """ Run model through validation dataset.
         """
         loss_meter = AverageMeter()
@@ -387,14 +448,8 @@ if __name__ == "__main__":
     ### Student is the model we're training
     ### Kwargs is a dictionary of variables declared above
     teacher = Teacher(**kwargs)
-    kwargs.pop('concept_vocab_field', None) # remove vocab_field, as it is not serializable
     if args.cuda:
         teacher = teacher.to('cuda')
-    ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
-    ### based on recent gradients (low gradients --> high LR, vice versa)
-    ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
-    ### People apparently just use it because it works well
-    optimizer = optim.Adam(teacher.parameters(), lr=args.lr, weight_decay=1e-4)
 
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
@@ -402,55 +457,64 @@ if __name__ == "__main__":
     import seaborn as sns
     sns.set_style('whitegrid')
 
-    best_acc = 0.0
-    best_epoch = -1
-    ### Losses format: epoch1_loss_train, ..., epochn_loss_train
-    ###                epoch1_loss_val,   ..., epochn_loss_val
-    losses = np.zeros((args.epochs, 2))
-    for epoch in range(1, args.epochs + 1):
-        train_loss = train(epoch)
-        val_loss = val()
-        losses[epoch - 1, 0] = train_loss
-        losses[epoch - 1, 1] = val_loss
+    for dset_num, dset in enumerate(args.data):
+        ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
+        ### based on recent gradients (low gradients --> high LR, vice versa)
+        ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
+        ### People apparently just use it because it works well
+        optimizer = optim.Adam(teacher.parameters(), lr=args.lr, weight_decay=1e-4)
 
-        # keep track of best weights -- this is equivalent
-        # to a simple version of early-stopping
+        best_acc = 0.0
+        best_epoch = -1
+        ### Losses format: epoch1_loss_train, ..., epochn_loss_train
+        ###                epoch1_loss_val,   ..., epochn_loss_val
+        losses = np.zeros((args.epochs[dset_num], 2))
+        for epoch in range(1, args.epochs[dset_num] + 1):
+            train_loader = data[dset]['train']
+            train_loss = train(epoch, train_loader)
+            val_loader = data[dset]['val']
+            val_loss = val(val_loader)
+            losses[epoch - 1, 0] = train_loss
+            losses[epoch - 1, 1] = val_loss
+
+            # keep track of best weights -- this is equivalent
+            # to a simple version of early-stopping
+            '''
+            is_best = best_acc < val_acc_meter.compute_gt_acc()
+            if is_best:
+                best_acc = val_acc_meter.compute_gt_acc()
+                best_epoch = epoch
+
+            # save weights to dict
+            ### This really should just be taken from kwargs
+            save_student_checkpoint(
+                {
+                    'state_dict': teacher.state_dict(),
+                    'val_loss': val_loss,
+                    'vocab_file': os.path.join(args.out_dir, model_id, 'vocab.pkl'),
+                    'optimizer': optimizer.state_dict(),
+                    'language_model_type': 'bilstm',
+                    'stim_model_type': 'featureMLP',
+                    'kwargs': kwargs
+                },
+                is_best,
+                os.path.join(args.out_dir, kwargs['model_id']), 
+                'checkpoint.pth.tar',
+                'model_best.pth.tar'
+            )
         '''
-        is_best = best_acc < val_acc_meter.compute_gt_acc()
-        if is_best:
-            best_acc = val_acc_meter.compute_gt_acc()
-            best_epoch = epoch
-
-        # save weights to dict
-        ### This really should just be taken from kwargs
-        save_student_checkpoint(
-            {
-                'state_dict': teacher.state_dict(),
-                'val_loss': val_loss,
-                'vocab_file': os.path.join(args.out_dir, model_id, 'vocab.pkl'),
-                'optimizer': optimizer.state_dict(),
-                'language_model_type': 'bilstm',
-                'stim_model_type': 'featureMLP',
-                'kwargs': kwargs
-            },
-            is_best,
-            os.path.join(args.out_dir, kwargs['model_id']), 
-            'checkpoint.pth.tar',
-            'model_best.pth.tar'
-        )
-    '''
-    train_samples = get_samples_and_prototypes(val=False)
-    train_samples.to_csv(os.path.join(args.out_dir, model_id, 'samples_train.csv'), index=False)
-    val_samples = get_samples_and_prototypes(val=True)
-    val_samples.to_csv(os.path.join(args.out_dir, model_id, 'samples_val.csv'), index=False)
-    
-    # plot loss over time
-    plt.figure()
-    plt.plot(range(args.epochs), losses[:, 0], '-', label='train')
-    plt.plot(range(args.epochs), losses[:, 1], '-', label='val')
-    plt.tight_layout()
-    plt.legend()
-    plt.savefig(os.path.join(args.out_dir, model_id, 'loss.png'))
+        train_samples = get_samples_and_prototypes(val=False)
+        train_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_train_{}.csv'.format(dset, dset_num)), index=False)
+        val_samples = get_samples_and_prototypes(val=True)
+        val_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_val_{}.csv'.format(dset, dset_num)), index=False)
+        
+        # plot loss over time
+        plt.figure()
+        plt.plot(range(args.epochs[dset_num]), losses[:, 0], '-', label='train')
+        plt.plot(range(args.epochs[dset_num]), losses[:, 1], '-', label='val')
+        plt.tight_layout()
+        plt.legend()
+        plt.savefig(os.path.join(args.out_dir, model_id, '{}_loss_{}.png'.format(dset, dset_num)))
 
     '''
     print("Loading best model from disk ...")
