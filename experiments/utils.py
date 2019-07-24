@@ -7,7 +7,7 @@ import numpy as np
 import random
 import os
 import shutil
-
+import sys
 
 import pickle
 import torch
@@ -183,13 +183,16 @@ class AccuracyMeter(object):
             print('\t Student Accuracy: {}'.format(self.compute_s_acc()))
 
 
-def set_seeds(seed=12132):
+def set_seeds(seed):
     """ Set random seeds to ensure result reproduction.
     """
+    if seed is None:
+        seed = random.randrange(2**32)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+    return seed
 
 
 def reverse(batch, vocabField, refGame=False):

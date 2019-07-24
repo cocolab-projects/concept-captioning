@@ -104,6 +104,8 @@ if __name__ == "__main__":
                         help='enables greedy language sampling')
     parser.add_argument('--lemmatized', type=bool, default=True,
                         help='enables or disables lemmatization for tokenization')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='random seed to use')
 
     parser.add_argument('--data', type=str, nargs='+', default=['concept'],
                         help='which data to train on, in which order (ref or concept)')
@@ -137,7 +139,7 @@ if __name__ == "__main__":
 
     # Set seeds
     ### Sets all RNG seeds with some fixed value
-    set_seeds()
+    seed = set_seeds(args.seed)
 
     ### Makes folder to put model in
     args.out_dir = os.path.join(args.out_dir, 'models')
@@ -226,6 +228,7 @@ if __name__ == "__main__":
         'batch_sizes': args.batch_sizes,
         'epochs': args.epochs,
         'lemmatized': args.lemmatized,
+        'seed': seed,
         'datapaths': args.datapaths,
 
         # XXX not that ugly, but note that fields is still from the last
@@ -443,8 +446,6 @@ if __name__ == "__main__":
         return loss_meter.avg#, acc_meter
 
     # Model Training
-    ### Setting the seeds again for some reason?
-    set_seeds()
     ### Student is the model we're training
     ### Kwargs is a dictionary of variables declared above
     teacher = Teacher(**kwargs)
