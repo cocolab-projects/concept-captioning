@@ -122,3 +122,6 @@ class Teacher(nn.Module):
                        eos=kwargs['end_index'],
                        pad=kwargs['pad_index'])
         return self.decoder.sample(hidden_input, indices, greedy=kwargs['greedy_sampling'])
+
+    def train_teacher(kwargs, use_best=False):
+        

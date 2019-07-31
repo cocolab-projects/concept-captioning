@@ -30,6 +30,9 @@ import torchtext.data as ttdata
 import pandas as pd
 from tqdm import tqdm
 
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
+
 VALID_DATASETS = ['unique_concept', 'concept', 'ref']
 DEFAULT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
                          concept='./data/concept/{}/vectorized/concept_dataset.tsv',
@@ -75,13 +78,13 @@ def parse_args():
     parser.add_argument('--dropout-student', type=float, default=0.0,
                         help='dropout probability (student)')
 
-    parser.add_argument('--teacher-data', type=str, nargs='*', default=None,
+    parser.add_argument('--teacher-dsets', type=str, nargs='*', default=None,
                         help='which data to (pre)train the teacher on,'
                         ' in which order (ref or concept)')
-    parser.add_argument('--student-data', type=str, nargs='*', default=None,
+    parser.add_argument('--student-dsets', type=str, nargs='*', default=None,
                         help='which data to (pre)train the student on,'
                         ' in which order (ref or concept)')
-    parser.add_argument('--comm-data', type=str, nargs='*', default=None,
+    parser.add_argument('--comm-dsets', type=str, nargs='*', default=None,
                         help='which data to play the communication game with,'
                         ' in which order (ref or concept)')
     # This argument is a bit tricky: the idea is that Python can parse strings
@@ -130,6 +133,10 @@ def parse_args():
         args.batch_sizes = args.batch_sizes * len(args.data)
     if len(args.epochs) == 1:
         args.epochs = args.epochs * len(args.data)
+
+    if  == args.comm_data == None:
+        print("Please set either teacher-data, student-data or comm-data.")
+        exit(1)
 
     return args
 
@@ -258,6 +265,7 @@ def make_kwargs(args, seed, data):
     # since they're all the same (asserted above)
     # (placing this code after the dump since the field isn't valid JSON)
     kwargs['vocab_field'] = fields['text'][1]
+    return kwargs
 
     def compute_loss(batch):
         """ Compute loss.
@@ -301,21 +309,6 @@ def make_kwargs(args, seed, data):
         average_loss = torch.mean(total_losses)
         return average_loss, logits
 
-
-    def compute_self_att_loss(alphas):
-        """ Compute self attention loss.
-        """ 
-        if args.self_att:
-            assert(alphas is not None), "Self Attention should have been applied"
-            I = torch.eye(args.r_dim_l)
-            if args.cuda:
-                I = I.to('cuda')
-            I = I.repeat(alphas.shape[0], 1, 1)
-            alphas_t = torch.transpose(alphas, 1, 2).contiguous()
-            return torch.norm(torch.bmm(alphas, alphas_t) - I)
-        else:
-            return 0.0
-
     def get_inputs(batch):
         (language, lang_lengths) = batch.text
         ### language: (batch_size, max language length)
@@ -336,13 +329,8 @@ def make_kwargs(args, seed, data):
         orig_lang = fields['text'][1].reverse(language)
         return stims, labels, language, lang_lengths
 
-    def get_samples_and_prototypes(val=False):
-        if val:
-            loader = val_loader
-        else: 
-            loader = train_loader
+    def get_samples_and_prototypes(loader):
         ### TODO why are so many words mapping to the unknown character?
-        ### NOTE stoi stands for string to index; itos stands for index to string
         orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
         for batch in loader:
             stims, labels, language, _ = get_inputs(batch)
@@ -363,7 +351,7 @@ def make_kwargs(args, seed, data):
         return df
             
 
-    def train(epoch, train_loader, backprop=True):
+    def train(model, epoch, train_loader):
         """ Train model for a single epoch.
         """
         ### Model is declared in global space 
@@ -378,23 +366,15 @@ def make_kwargs(args, seed, data):
         train_loader.init_epoch()
         pbar = tqdm(total=len(train_loader))
         
-        if backprop:
-            ### Sets model in training mode
-            teacher.train()
-        else:
-            ### Sets model in evaluation mode
-            ### (This is never used in code, i.e. backprop is always true)
-            teacher.eval()
-
+        # Sets model in training mode
+        model.train()
         ### Enumerate produces a (counter, item) pair for each item in an iterator
         ### "train_loader" is an iterator of minibatches
         for batch_idx, batch in enumerate(train_loader):
             optimizer.zero_grad()
-            ### loss is F.cross_entropy(logits, y)
-            loss, logits = compute_loss(batch)
+            loss, logits = model.compute_loss(batch)
 
             if backprop:
-                ### step I don't understand
                 loss.backward()
                 optimizer.step()
 
@@ -414,18 +394,18 @@ def make_kwargs(args, seed, data):
         return loss_meter.avg
 
 
-    def val(val_loader):
+    def val(model, val_loader):
         """ Run model through validation dataset.
         """
         loss_meter = AverageMeter()
         #acc_meter = AccuracyMeter()
         pbar = tqdm(total=len(val_loader))
         val_loader.init_epoch()
-        teacher.eval()
+        model.eval()
 
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_loader):
-                loss, logits = compute_loss(batch)
+                loss, logits = model.compute_loss(batch)
                 #loss += compute_self_att_loss(alphas)
                 #acc_meter.update(logits, batch)
                 loss_meter.update(loss.data.item(), batch.batch_size)
@@ -435,25 +415,16 @@ def make_kwargs(args, seed, data):
         #acc_meter.print()
         return loss_meter.avg#, acc_meter
 
-    # Model Training
-    ### Student is the model we're training
-    ### Kwargs is a dictionary of variables declared above
-    teacher = Teacher(**kwargs)
-    if args.cuda:
-        teacher = teacher.to('cuda')
-
-    matplotlib.use('agg')
-    import matplotlib.pyplot as plt
-    ### This seaborn graph not used?
-    import seaborn as sns
-    sns.set_style('whitegrid')
+def train_model(model, data, n_epochs, **kwargs):
+    if kwargs['cuda']:
+        model = model.to('cuda')
 
     for dset_num, dset in enumerate(args.data):
         ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
         ### based on recent gradients (low gradients --> high LR, vice versa)
         ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
         ### People apparently just use it because it works well
-        optimizer = optim.Adam(teacher.parameters(), lr=args.lr, weight_decay=1e-4)
+        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
         best_acc = 0.0
         best_epoch = -1
@@ -462,9 +433,9 @@ def make_kwargs(args, seed, data):
         losses = np.zeros((args.epochs[dset_num], 2))
         for epoch in range(1, args.epochs[dset_num] + 1):
             train_loader = data[dset]['train']
-            train_loss = train(epoch, train_loader)
+            train_loss = train(model, epoch, train_loader)
             val_loader = data[dset]['val']
-            val_loss = val(val_loader)
+            val_loss = val(model, val_loader)
             losses[epoch - 1, 0] = train_loss
             losses[epoch - 1, 1] = val_loss
 
@@ -494,11 +465,6 @@ def make_kwargs(args, seed, data):
                 'model_best.pth.tar'
             )
         '''
-        train_samples = get_samples_and_prototypes(val=False)
-        train_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_train_{}.csv'.format(dset, dset_num)), index=False)
-        val_samples = get_samples_and_prototypes(val=True)
-        val_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_val_{}.csv'.format(dset, dset_num)), index=False)
-        
         # plot loss over time
         plt.figure()
         plt.plot(range(args.epochs[dset_num]), losses[:, 0], '-', label='train')
@@ -514,18 +480,28 @@ def make_kwargs(args, seed, data):
     val()
     '''
 
+def output_samples_and_prototypes(speaker, train_loader, val_loader):
+    train_samples = get_samples_and_prototypes(train_loader)
+    train_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_train_{}.csv'.format(dset, dset_num)), index=False)
+    val_samples = get_samples_and_prototypes(val_loader)
+    val_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_val_{}.csv'.format(dset, dset_num)), index=False)
+        
+
 if __name__ == "__main__":
     args = parse_args()
-    if args.teacher_data == args.student_data == args.comm_data == None:
-        print("Please set either teacher-data, student-data or comm-data.")
-        exit(1)
     seed = set_seeds(args.seed)
     make_model_dir()
     kwargs = make_kwargs(args, seed)
-    if args.teacher_data is not None or args.comm_data is not None:
-        teacher = Teacher.train_teacher(**kwargs)
-    if args.student_data is not None or args.comm_data is not None:
-        student = Student.train_ref_student(**kwargs)
-    if args.comm_data is not None:
+    if args.teacher_dsets is not None or args.comm_data is not None:
+        teacher = Teacher(**kwargs)
+        train_model(teacher, 
+        output_samples_and_prototypes(teacher, 
+        # teacher = Teacher.train_teacher(**kwargs, use_best=True)
+    if args.student_dsets is not None or args.comm_data is not None:
+        student = Student(**kwargs)
+        # student = Student.train_ref_student(**kwargs, use_best=True)
+    if args.comm_dsets is not None:
         # TODO maybe don't need to keep comm around?
         comm = CommunicationGame.train_comm_game(teacher, student, **kwargs)
+
+        # TODO get samples (and prototypes :P) for teacher
