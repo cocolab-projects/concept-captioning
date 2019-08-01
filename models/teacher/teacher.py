@@ -82,9 +82,6 @@ class Teacher(nn.Module):
         boot_max_size_mlt: determines the maximum number of positive or negative
         examples to have (n_pos*boot_max_size_mlt, etc.)
         '''
-        
-
-
         # Create representations of stimuli
         batch_size, num_examples, num_features = stims.shape
         stims_flat = stims.view(batch_size*num_examples, num_features)
@@ -123,5 +120,92 @@ class Teacher(nn.Module):
                        pad=kwargs['pad_index'])
         return self.decoder.sample(hidden_input, indices, greedy=kwargs['greedy_sampling'])
 
-    def train_teacher(kwargs, use_best=False):
-        
+    def compute_loss(batch):
+        """ Compute loss.
+        """
+        stims, labels, language, lang_lengths = get_inputs(batch)
+        logits = self(stims, labels, language, lang_lengths)
+        # logits shape: (batch size, max seq length, num vocab)
+        # Assume rnn_decoder is your language model;
+        # img_rep is your image representation (batch_size x hidden_size);
+        # language is your list of sentences (batch_size x max_lang_length)
+        # lang_length is your list of language lengths (batch_Size)
+        max_seq_len = language.size(1)
+        # We only care about logits up to the last token 
+        # (after the last token, there's nothing to predict!)
+        ### Also, we don't need to care about how it predicted the first token, 
+        ### since it's always an SOS
+        logits = logits[:, :-1].contiguous()
+        language = language[:, 1:].contiguous()
+
+        # Get the batch size (and make sure it's the same for all data)
+        batch_size = stims.shape[0]
+        assert(batch_size == language.shape[0] == lang_lengths.shape[0] == labels.shape[0])
+        # "Unfold" the sequence so we have a 2d matrix
+        logits_2d = logits.view(batch_size * (max_seq_len - 1), -1)
+        ### TODO we probably don't need to convert language to longs here
+        ### (it should already be longs, since we never converted to floats
+        language_1d = language.long().view(batch_size * (max_seq_len - 1))
+
+        # Cross entrops is your loss function - in short, you pay a penalty if you put probability amss onl
+        # Note this works *without* having to normalize the softmax output
+        loss = F.cross_entropy(logits_2d, language_1d, reduction='none')
+        loss = loss.view(batch_size, (max_seq_len - 1))
+
+        # Mask out losses for pad tokens
+        loss *= (language != kwargs['pad_index']).float()
+        # Sum up the loss for each token prediction to get a total loss per language
+        total_losses = torch.sum(loss, dim=1)
+        # Normalize total loss for each sequence by its length
+        total_losses /= lang_lengths.float()
+        # then average across language in the batch
+        average_loss = torch.mean(total_losses)
+        return average_loss, logits
+
+
+### HELPER METHODS ###
+    def get_inputs(batch):
+        '''
+        Processes input of form 
+            text: (language, lengths)
+            labels: length num_stimuli binary string of ground truth labels
+            0-49: length num_features binary strings describing each stimulus
+        into form
+            language: max_language_length string of indices
+            lengths: int
+            stims: (num_stimuli x num_features) tensor of all stimuli
+            labels
+        '''
+        (language, lang_lengths) = batch.text
+        ### language: (batch_size, max language length)
+        ### lang_lengths: (batch_size)
+        if args.embeddings == "elmo":
+            ### TODO change vars
+            x_l_reversed = vocab_field.reverse(x_l.data)
+            x_l = convert_to_elmo_ids(x_l_reversed, args.cuda)
+            x_l_lengths = None
+        ### get the (batch_size) tensor (basically list) of stimuli
+        stims = construct_stim_reps(batch)
+        labels = batch.__dict__['labels'].float()
+        if args.cuda:
+            stims = stims.to('cuda')
+            language = language.to('cuda')
+            lang_lengths = lang_lengths.to('cuda')
+            labels = labels.to('cuda')
+        return stims, labels, language, lang_lengths
+
+    def construct_stim_reps(batch):
+        """
+        Concats separate (num_features) stimulus tensors into one 
+        (num_stimuli x num_features) tensor
+        """
+        ### Appends all of the different features together into one column
+        vals = []
+        num_examples = batch.__dict__['labels'].shape[1]
+        for i in range(num_examples):
+            vals.append(batch.__dict__[str(i)].unsqueeze(dim=1)) ### (batch_size, 1)
+        stims = torch.cat(vals, dim=1)
+        ### convert entire tensor into floats
+        return stims.float()
+
+

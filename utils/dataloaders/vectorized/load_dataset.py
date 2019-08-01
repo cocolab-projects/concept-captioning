@@ -100,7 +100,7 @@ def construct_field(
     else:
         raise Exception('Invalid Field Type')
 
-def load_dataset(file_template, lemmatized, text_field = None):
+def load_dataset(file_template, lemmatized=False, text_field = None):
     """ Read text components of dataset into memory and preprocess accordingly.
     @param file_template: './data/xsd/{}/data.tsv' -- file path except for train/val/test 
     """
@@ -223,20 +223,6 @@ def gen_text_preprocessor():
         return string
 
     return data.Pipeline(clean_str)
-
-
-def construct_stim_reps(batch):
-    """ Construct stimulus representations for batch.
-    """
-    ### Appends all of the different features together into one column
-    vals = []
-    num_examples = batch.__dict__['labels'].shape[1]
-    for i in range(num_examples):
-        vals.append(batch.__dict__[str(i)].unsqueeze(dim=1)) ### (batch_size, 1)
-        ### I mean, really it's a length num_feats list of length batch_size tensors
-    stims = torch.cat(vals, dim=1)
-    ### convert entire tensor into floats
-    return stims.float()
 
 
 def construct_y(batch, train_obj):

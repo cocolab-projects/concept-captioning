@@ -18,8 +18,9 @@ import sys
 import time
 
 from models.teacher.teacher import Teacher
+from models.student.lfl.comm_student import Student
 from utils.constants import Constants
-from utils.dataloaders.vectorized.load_dataset import load_dataset, construct_stim_reps, construct_y, convert_to_elmo_ids
+from utils.dataloaders.vectorized.load_dataset import load_dataset, construct_y, convert_to_elmo_ids
 from experiments.utils import AverageMeter, AccuracyMeter, save_student_checkpoint, set_seeds
 from experiments.utils import load_single_task_student_checkpoint as load_student_checkpoint
 
@@ -34,7 +35,10 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 VALID_DATASETS = ['unique_concept', 'concept', 'ref']
-DEFAULT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
+DEFAULT_TEACHER_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
+                         concept='./data/concept/{}/vectorized/concept_dataset.tsv',
+                         ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
+DEFAULT_STUDENT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
                          concept='./data/concept/{}/vectorized/concept_dataset.tsv',
                          ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
 DEFAULT_B_SIZES = dict(unique_concept=12, concept=32, ref=32)
@@ -78,22 +82,39 @@ def parse_args():
     parser.add_argument('--dropout-student', type=float, default=0.0,
                         help='dropout probability (student)')
 
+    # Current usage: specify teacher or student datasets, and not comm datasets,
+    # if you want to train those models in isolation
+    # If specifying comm datasets, use student datasets as pretraining data
+    # It is expected to only run one of these types of experiments at a time
     parser.add_argument('--teacher-dsets', type=str, nargs='*', default=None,
-                        help='which data to (pre)train the teacher on,'
+                        help='which data to train the teacher on,'
                         ' in which order (ref or concept)')
     parser.add_argument('--student-dsets', type=str, nargs='*', default=None,
-                        help='which data to (pre)train the student on,'
-                        ' in which order (ref or concept)')
+                        help='which data to train the student on,'
+                        ' in which order (ref or concept);'
+                        ' if comm-dsets is specified, this is used as pretraining data')
     parser.add_argument('--comm-dsets', type=str, nargs='*', default=None,
                         help='which data to play the communication game with,'
                         ' in which order (ref or concept)')
+    parser.add_argument('pretrain-teacher', action='store_true', default=False,
+                        help='whether or not to pretrain the comm game teacher')
     # This argument is a bit tricky: the idea is that Python can parse strings
     # as Python literals (including dicts) with the ast.literal_eval function
-    parser.add_argument('--datapaths', type=ast.literal_eval, 
-                        default=DEFAULT_DATAPATHS,
+    parser.add_argument('--datapaths-student', type=ast.literal_eval, 
+                        default=DEFAULT_STUDENT_DATAPATHS,
                         help='paths to data files; input as python dict notation'
                         'for each dataset specified in --data'
                         'NOTE: only use single quote marks in the dict')
+    # TODO finish this
+    # NOTE I will have to change the type of data that the student accepts,
+    # since I'll be generating it from the teacher data
+    # (so at the very least it will be much easier that way)
+    parser.add_argument('--datapaths-teacher', type=ast.literal_eval, 
+                        default=DEFAULT_TEACHER_DATAPATHS,
+                        help='paths to data files; input as python dict notation'
+                        ' for each dataset specified in --data'
+                        ' NOTE: only use single quote marks in the dict'
+                        ' Also used as the communication game datapaths')
     parser.add_argument('--batch-sizes', type=ast.literal_eval, 
                         default=DEFAULT_B_SIZES, metavar='N',
                         help='input batch size for training'
@@ -134,9 +155,10 @@ def parse_args():
     if len(args.epochs) == 1:
         args.epochs = args.epochs * len(args.data)
 
-    if  == args.comm_data == None:
-        print("Please set either teacher-data, student-data or comm-data.")
-        exit(1)
+    assert any(args.teacher_data, args.student_data, args.comm_data), \
+            "Please set either teacher-data, student-data or comm-data."
+    assert (not args.teacher_data and args.comm_data), "Please use student-data \
+            to indicate pretraining datasets for the comm game."
 
     return args
 
@@ -156,14 +178,21 @@ def make_model_dir(out_dir):
     ### The actual '{}' folders are (raw; maybe not used here), test, train and val
     ### {}_data is a TabularDataset (torchtext.data object)
 
-    ### fields is column_field_types, which was also set to be the "fields" variable of {}_data
-    data = {}
+def get_loaders(dsets, text_field=None):
+    '''
+    Params:
+        dsets: a list of the names of the datasets to be used in the experiment
+        text_field: the torchtext field object to use for the text column of the data
+            use a previously generated text_field to ensure the same stoi mappings
+    '''
+    loaders = {}
     train_data = []
-    # Use a constant text field to make sure vocabs are the same across datasets
-    text_field = None
-    for dataset in set(args.data):
-        train, val, fields = load_dataset(args.datapaths[dataset], 
-                                          args.lemmatized,
+    for dset in set(dsets):
+        # If text_field is None, then load_dataset creates a text field and returns it
+        # Otherwise it just uses the one passed in
+        # (If it was previously None, now it will be the one that was created)
+        train, val, text_field = load_dataset(args.datapaths[dataset], 
+                                          lemmatized=args.lemmatized,
                                           text_field=text_field)
         train_data.append(train)
         if args.cuda:
@@ -174,28 +203,24 @@ def make_model_dir(out_dir):
             (train, val), sort_key=lambda x: len(x.text), sort_within_batch=True,
             batch_sizes=(args.batch_sizes[dataset], args.batch_sizes[dataset]), device=device)
 
-        data[dataset] = dict(train=train_loader, val=val_loader, fields=fields)
-        # Set text field to be the same as in the last dataset loaded
-        text_field = fields['text'][1]
+        loaders[dset] = dict(train=train_loader, val=val_loader)
 
-    for dataset in set(args.data):
-        # Construct vocabulary objects & write to disk
-        ### glove by default
-        ### builds the mapping from tokens to (well, initially I thought ints, but actually) representation vectors
-        ### also converts words to their vocab indices
-        ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
-        ### note: the (gigantic) vocab file is stored in .\.vector_cache
-        if args.embeddings == "glove":
-            vectors = "glove.840B.300d"
-        elif args.embeddings == "elmo":
-            # To be vectorized later
-            vectors = None
-        else:
-            raise Exception("Invalid Embeddings Type")
-        data[dataset]['fields']['text'][1].build_vocab(*train_data, vectors=vectors)
-        torch.save(fields['text'][1], os.path.join(args.out_dir, model_id, dataset+'_vocab.pkl'), pickle_module=dill)
+    # Construct vocabulary objects & write to disk
+    ### glove by default
+    ### passing in train_data tells torch that the words in train_data['text'] are the words it should use as keys
+    ### note: the (gigantic) vocab file is stored in .\.vector_cache
+    if args.embeddings == "glove":
+        vectors = "glove.840B.300d"
+    elif args.embeddings == "elmo":
+        # To be vectorized later
+        vectors = None
+    else:
+        raise Exception("Invalid Embeddings Type")
+    text_field.build_vocab(*train_data, vectors=vectors)
+    torch.save(text_field, os.path.join(args.out_dir, model_id, dataset+'_vocab.pkl'), pickle_module=dill)
+    return loaders, text_field
 
-def make_kwargs(args, seed, data):
+def make_kwargs(args, text_field, other):
     kwargs = {
         'stim_model_type': 'featureMLP',
 
@@ -227,22 +252,22 @@ def make_kwargs(args, seed, data):
         'batch_sizes': args.batch_sizes,
         'epochs': args.epochs,
         'lemmatized': args.lemmatized,
-        'seed': seed,
         'datapaths': args.datapaths,
 
         # XXX not that ugly, but note that fields is still from the last
         # dataset in the for loop above
-        'unk_index': fields['text'][1].vocab.stoi[Constants.UNK_TOKEN],
-        'pad_index': fields['text'][1].vocab.stoi[Constants.PAD_TOKEN],
-        'start_index': fields['text'][1].vocab.stoi[Constants.START_TOKEN],
-        'end_index': fields['text'][1].vocab.stoi[Constants.END_TOKEN],
+        'unk_index': text_field.vocab.stoi[Constants.UNK_TOKEN],
+        'pad_index': text_field.vocab.stoi[Constants.PAD_TOKEN],
+        'start_index': text_field.vocab.stoi[Constants.START_TOKEN],
+        'end_index': text_field.vocab.stoi[Constants.END_TOKEN],
 
-        'greedy_sampling': True
+        **other
     }
 
     # Reality checking for vocab indices
     ### TODO make this cleaner (or figure out how to set these indices manually?)
     ### TODO assert that vocab vectors tensors are equal
+    '''
     assert all([dset['fields']['text'][1].vocab.itos == fields['text'][1].vocab.itos for dset in data.values()])
     assert all([dset['fields']['text'][1].vocab.stoi[Constants.UNK_TOKEN] == \
                 kwargs['unk_index'] for dset in data.values()])
@@ -252,7 +277,7 @@ def make_kwargs(args, seed, data):
                 kwargs['start_index'] for dset in data.values()])
     assert all([dset['fields']['text'][1].vocab.stoi[Constants.END_TOKEN] == \
                 kwargs['end_index'] for dset in data.values()])
-
+    '''
 
     with open(os.path.join(model_ids_dir, '{}.json'.format(kwargs['model_id'])), 'w') as id_f, \
             open(os.path.join(args.out_dir, model_id, 'params.json'), 'w') as params_f:
@@ -261,159 +286,95 @@ def make_kwargs(args, seed, data):
         json.dump(kwargs, params_f, indent=2)
         json.dump(kwargs, id_f, indent=2)
 
-    # Arbitrarily add the last dataset's text field as the vocab field,
-    # since they're all the same (asserted above)
     # (placing this code after the dump since the field isn't valid JSON)
-    kwargs['vocab_field'] = fields['text'][1]
+    kwargs['vocab_field'] = text_field
     return kwargs
 
-    def compute_loss(batch):
-        """ Compute loss.
-        """
-        stims, labels, language, lang_lengths = get_inputs(batch)
-        logits = teacher(stims, labels, language, lang_lengths)
-        # logits shape: (batch size, max seq length, num vocab)
-        # Assume rnn_decoder is your language model;
-        # img_rep is your image representation (batch_size x hidden_size);
-        # language is your list of sentences (batch_size x max_lang_length)
-        # lang_length is your list of language lengths (batch_Size)
-        max_seq_len = language.size(1)
-        # We only care about logits up to the last token 
-        # (after the last token, there's nothing to predict!)
-        ### Also, we don't need to care about how it predicted the first token, 
-        ### since it's always an SOS
-        logits = logits[:, :-1].contiguous()
-        language = language[:, 1:].contiguous()
-
-        # Get the batch size (and make sure it's the same for all data)
-        batch_size = stims.shape[0]
-        assert(batch_size == language.shape[0] == lang_lengths.shape[0] == labels.shape[0])
-        # "Unfold" the sequence so we have a 2d matrix
-        logits_2d = logits.view(batch_size * (max_seq_len - 1), -1)
-        ### TODO we probably don't need to convert language to longs here
-        ### (it should already be longs, since we never converted to floats
-        language_1d = language.long().view(batch_size * (max_seq_len - 1))
-
-        # Cross entrops is your loss function - in short, you pay a penalty if you put probability amss onl #TODO ?
-        # Note this works *without* having to normalize the softmax output
-        loss = F.cross_entropy(logits_2d, language_1d, reduction='none')
-        loss = loss.view(batch_size, (max_seq_len - 1))
+def get_samples_and_prototypes(model, loader):
+    ### TODO why are so many words mapping to the unknown character?
+    orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
+    for batch in loader:
+        stims, labels, language, _ = get_inputs(batch)
+        orig_lang.extend(model.text_field.reverse(language))
+        gen_ids = teacher.sample(stims, labels, **kwargs)
+        gen_lang_greedy.extend(model.text_field.reverse(gen_ids[0]))
+        kwargs['greedy_sampling'] = False
+        gen_ids = teacher.sample(stims, labels, **kwargs)
+        gen_lang.extend(model.text_field.reverse(gen_ids[0]))
+        kwargs['greedy_sampling'] = True
+        stims_list.extend(stims.tolist())
+        pos_prototypes, neg_prototypes = teacher.get_prototypes(stims, labels)
+        pos_list.extend(pos_prototypes.tolist())
+        neg_list.extend(neg_prototypes.tolist())
+    df = pd.DataFrame(
+        list(zip(stims_list, orig_lang, gen_lang_greedy, gen_lang, pos_list, neg_list)), 
+        columns=['stims', 'orig_lang', 'gen_lang_greedy', 'gen_lang', 'pos_prototypes', 'neg_prototypes'])
+    return df
         
-        # Mask out losses for pad tokens
-        loss *= (language != kwargs['pad_index']).float()
-        # Sum up the loss for each token prediction to get a total loss per language
-        total_losses = torch.sum(loss, dim=1)
-        # Normalize total loss for each sequence by its length
-        total_losses /= lang_lengths.float()
-        # then average across language in the batch
-        average_loss = torch.mean(total_losses)
-        return average_loss, logits
 
-    def get_inputs(batch):
-        (language, lang_lengths) = batch.text
-        ### language: (batch_size, max language length)
-        ### lang_lengths: (batch_size)
-        if args.embeddings == "elmo":
-            ### TODO change vars
-            x_l_reversed = vocab_field.reverse(x_l.data)
-            x_l = convert_to_elmo_ids(x_l_reversed, args.cuda)
-            x_l_lengths = None
-        ### get the (batch_size) tensor (basically list) of stimuli
-        stims = construct_stim_reps(batch)
-        labels = batch.__dict__['labels'].float()
-        if args.cuda:
-            stims = stims.to('cuda')
-            language = language.to('cuda')
-            lang_lengths = lang_lengths.to('cuda')
-            labels = labels.to('cuda')
-        orig_lang = fields['text'][1].reverse(language)
-        return stims, labels, language, lang_lengths
+def train(model, epoch, train_loader):
+    """ Train model for a single epoch.
+    """
+    ### Model is declared in global space 
+    ### (although after this function, which is allowed, I guess?)
+    # Data loading & progress visualization
+    ### loss_meter stores the loss of the current batch and the average loss
+    loss_meter = AverageMeter()
+    #acc_meter = AccuracyMeter()
+    ### tqdm is a progress bar for iterations of a loop through an iterator
+    ### generally you wrap the iterable in it, like tqdm(range), to automatically keep track of #iterations
+    ### but you can also use pbar.update() to tell it to iterate manually
+    train_loader.init_epoch()
+    pbar = tqdm(total=len(train_loader))
+    
+    # Sets model in training mode
+    model.train()
+    ### Enumerate produces a (counter, item) pair for each item in an iterator
+    ### "train_loader" is an iterator of minibatches
+    for batch_idx, batch in enumerate(train_loader):
+        optimizer.zero_grad()
+        loss, logits = model.compute_loss(batch)
 
-    def get_samples_and_prototypes(loader):
-        ### TODO why are so many words mapping to the unknown character?
-        orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
-        for batch in loader:
-            stims, labels, language, _ = get_inputs(batch)
-            orig_lang.extend(fields['text'][1].reverse(language))
-            gen_ids = teacher.sample(stims, labels, **kwargs)
-            gen_lang_greedy.extend(fields['text'][1].reverse(gen_ids[0]))
-            kwargs['greedy_sampling'] = False
-            gen_ids = teacher.sample(stims, labels, **kwargs)
-            gen_lang.extend(fields['text'][1].reverse(gen_ids[0]))
-            kwargs['greedy_sampling'] = True
-            stims_list.extend(stims.tolist())
-            pos_prototypes, neg_prototypes = teacher.get_prototypes(stims, labels)
-            pos_list.extend(pos_prototypes.tolist())
-            neg_list.extend(neg_prototypes.tolist())
-        df = pd.DataFrame(
-            list(zip(stims_list, orig_lang, gen_lang_greedy, gen_lang, pos_list, neg_list)), 
-            columns=['stims', 'orig_lang', 'gen_lang_greedy', 'gen_lang', 'pos_prototypes', 'neg_prototypes'])
-        return df
-            
+        if backprop:
+            loss.backward()
+            optimizer.step()
 
-    def train(model, epoch, train_loader):
-        """ Train model for a single epoch.
-        """
-        ### Model is declared in global space 
-        ### (although after this function, which is allowed, I guess?)
-        # Data loading & progress visualization
-        ### loss_meter stores the loss of the current batch and the average loss
-        loss_meter = AverageMeter()
-        #acc_meter = AccuracyMeter()
-        ### tqdm is a progress bar for iterations of a loop through an iterator
-        ### generally you wrap the iterable in it, like tqdm(range), to automatically keep track of #iterations
-        ### but you can also use pbar.update() to tell it to iterate manually
-        train_loader.init_epoch()
-        pbar = tqdm(total=len(train_loader))
-        
-        # Sets model in training mode
-        model.train()
-        ### Enumerate produces a (counter, item) pair for each item in an iterator
-        ### "train_loader" is an iterator of minibatches
-        for batch_idx, batch in enumerate(train_loader):
-            optimizer.zero_grad()
+        # Update progress
+        #acc_meter.update(logits, batch)
+        loss_meter.update(loss.data.item(), batch.batch_size)
+        ### Every so often, print progress information (example #, average loss over this epoch, etc.)
+        ### also resets pbar onto a new line
+        if batch_idx % args.log_interval == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * batch.batch_size, len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), loss_meter.avg))
+        pbar.update()
+    pbar.close()
+    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, loss_meter.avg))
+    #acc_meter.print()
+    return loss_meter.avg
+
+
+def val(model, val_loader):
+    """ Run model through validation dataset.
+    """
+    loss_meter = AverageMeter()
+    #acc_meter = AccuracyMeter()
+    pbar = tqdm(total=len(val_loader))
+    val_loader.init_epoch()
+    model.eval()
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(val_loader):
             loss, logits = model.compute_loss(batch)
-
-            if backprop:
-                loss.backward()
-                optimizer.step()
-
-            # Update progress
+            #loss += compute_self_att_loss(alphas)
             #acc_meter.update(logits, batch)
             loss_meter.update(loss.data.item(), batch.batch_size)
-            ### Every so often, print progress information (example #, average loss over this epoch, etc.)
-            ### also resets pbar onto a new line
-            if batch_idx % args.log_interval == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * batch.batch_size, len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader), loss_meter.avg))
             pbar.update()
-        pbar.close()
-        print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, loss_meter.avg))
-        #acc_meter.print()
-        return loss_meter.avg
-
-
-    def val(model, val_loader):
-        """ Run model through validation dataset.
-        """
-        loss_meter = AverageMeter()
-        #acc_meter = AccuracyMeter()
-        pbar = tqdm(total=len(val_loader))
-        val_loader.init_epoch()
-        model.eval()
-
-        with torch.no_grad():
-            for batch_idx, batch in enumerate(val_loader):
-                loss, logits = model.compute_loss(batch)
-                #loss += compute_self_att_loss(alphas)
-                #acc_meter.update(logits, batch)
-                loss_meter.update(loss.data.item(), batch.batch_size)
-                pbar.update()
-        pbar.close()
-        print('====> Validation set loss: {:.4f}'.format(loss_meter.avg))
-        #acc_meter.print()
-        return loss_meter.avg#, acc_meter
+    pbar.close()
+    print('====> Validation set loss: {:.4f}'.format(loss_meter.avg))
+    #acc_meter.print()
+    return loss_meter.avg#, acc_meter
 
 def train_model(model, data, n_epochs, **kwargs):
     if kwargs['cuda']:
@@ -492,16 +453,25 @@ if __name__ == "__main__":
     seed = set_seeds(args.seed)
     make_model_dir()
     kwargs = make_kwargs(args, seed)
-    if args.teacher_dsets is not None or args.comm_data is not None:
-        teacher = Teacher(**kwargs)
-        train_model(teacher, 
-        output_samples_and_prototypes(teacher, 
-        # teacher = Teacher.train_teacher(**kwargs, use_best=True)
-    if args.student_dsets is not None or args.comm_data is not None:
-        student = Student(**kwargs)
-        # student = Student.train_ref_student(**kwargs, use_best=True)
+    # TODO add back in normal single-model experiments
     if args.comm_dsets is not None:
-        # TODO maybe don't need to keep comm around?
-        comm = CommunicationGame.train_comm_game(teacher, student, **kwargs)
+        student_loaders, text_field = get_loaders(args.student_dsets, 'student')
+        # Get student pretraining dataset loaders
+        # Initialize student, train it on its pretraining dsets (initialize to use all vocab if not pretraining)
+        student = Student(**kwargs)
+        train_model(student)
+        # If pretraining teacher, get teacher pretraining dataset loaders
+        if args.pretrain_teacher:
+            teacher_loaders = get_loaders(args.student_dsets, text_field=text_field)
+            # Load in same datasets as for student pretraining
+            # XXX First try using different field objects in the hopes that they use the same stoi
+            # If not, use the same object, and figure out how not to share weights (it should be good enough to just have different torch embedding objs
+            # XXX So maybe we can use the same field object after all :D
+            # They'll both be initialized with glove, but that's okay (probably for the best)
+        # Initialize teacher with same vocab as student (although making sure they don't share weights), and train it on the same pretraining dsets if desired
+        #train_model(teacher, 
+        #output_samples_and_prototypes(teacher, 
+        # Run comm game
+        # comm = CommunicationGame.train_comm_game(teacher, student, **kwargs)
 
         # TODO get samples (and prototypes :P) for teacher
