@@ -35,10 +35,8 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 VALID_DATASETS = ['unique_concept', 'concept', 'ref']
-DEFAULT_TEACHER_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
-                         concept='./data/concept/{}/vectorized/concept_dataset.tsv',
-                         ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
-DEFAULT_STUDENT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
+VALID_STUDENT_DATASETS = ['concept', 'ref']
+DEFAULT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_concept_dataset.tsv',
                          concept='./data/concept/{}/vectorized/concept_dataset.tsv',
                          ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
 DEFAULT_B_SIZES = dict(unique_concept=12, concept=32, ref=32)
@@ -47,13 +45,13 @@ DEFAULT_B_SIZES = dict(unique_concept=12, concept=32, ref=32)
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--hidden-dim-l', type=int, default=100,
+    parser.add_argument('--hidden-dim-l-student', type=int, default=100,
                         help='hidden dimensions (language)')
-    parser.add_argument('--output-dim-l', type=int, default=100,
+    parser.add_argument('--output-dim-l-student', type=int, default=100,
                         help='output dimensions (language)')
-    parser.add_argument('--num-layers-l', type=int, default=1,
+    parser.add_argument('--num-layers-l-student', type=int, default=1,
                         help='number of layers in RNN')
-    parser.add_argument('--dropout-l', type=float, default=0.0,
+    parser.add_argument('--dropout-l-student', type=float, default=0.0,
                         help='dropout probability (language)')
 
     parser.add_argument('--self-att', action='store_true', default=False,
@@ -63,24 +61,49 @@ def parse_args():
     parser.add_argument('--r-dim-l', type=int, default=5,
                     help='number of attention hops for self attention')
 
-    parser.add_argument('--input-dim-s', type=int, default=78,
+    parser.add_argument('--input-dim-s-student', type=int, default=78,
                         help='input representation dimensions (stim)')
-    parser.add_argument('--hidden-dim-s', type=int, default=100,
-        help='hidden representation dimensions (stim)')
-    parser.add_argument('--output-dim-s', type=int, default=100,
-        help='output representation dimensions (stim)')
-    parser.add_argument('--num-layers-s', type=int, default=3,
+    parser.add_argument('--hidden-dim-s-student', type=int, default=100,
+                        help='hidden representation dimensions (stim)')
+    parser.add_argument('--output-dim-s-student', type=int, default=100,
+                        help='output representation dimensions (stim)')
+    parser.add_argument('--num-layers-s-student', type=int, default=3,
                         help='number of layers in stim representation network')
-    parser.add_argument('--dropout-s', type=float, default=0.0,
+    parser.add_argument('--dropout-s-student', type=float, default=0.0,
                         help='dropout probability (stim)')
 
 
     parser.add_argument('--hidden-dim-student', type=int, default=100,
-        help='hidden representation dimensions (student)')
+                        help='hidden representation dimensions (student)')
     parser.add_argument('--num-layers-student', type=int, default=3,
                         help='number of layers in student prediction network')
     parser.add_argument('--dropout-student', type=float, default=0.0,
                         help='dropout probability (student)')
+
+    parser.add_argument('--bn-student', action='store_true', default=False,
+                        help='use batch normalization')
+
+    parser.add_argument('--hidden-dim-l-teacher', type=int, default=100,
+                        help='hidden dimensions (language)')
+    parser.add_argument('--output-dim-l-teacher', type=int, default=100,
+                        help='output dimensions (language)')
+    parser.add_argument('--num-layers-l-teacher', type=int, default=1,
+                        help='number of layers in RNN')
+    parser.add_argument('--dropout-l-teacher', type=float, default=0.0,
+                        help='dropout probability (language)')
+
+    parser.add_argument('--input-dim-s-teacher', type=int, default=78,
+                        help='input representation dimensions (stim)')
+    parser.add_argument('--hidden-dim-s-teacher', type=int, default=100,
+                        help='hidden representation dimensions (stim)')
+    parser.add_argument('--output-dim-s-teacher', type=int, default=100,
+                        help='output representation dimensions (stim)')
+    parser.add_argument('--num-layers-s-teacher', type=int, default=3,
+                        help='number of layers in stim representation network')
+    parser.add_argument('--dropout-s-teacher', type=float, default=0.0,
+                        help='dropout probability (stim)')
+    parser.add_argument('--bn-teacher', action='store_true', default=False,
+                        help='use batch normalization')
 
     # Current usage: specify teacher or student datasets, and not comm datasets,
     # if you want to train those models in isolation
@@ -96,40 +119,41 @@ def parse_args():
     parser.add_argument('--comm-dsets', type=str, nargs='*', default=None,
                         help='which data to play the communication game with,'
                         ' in which order (ref or concept)')
-    parser.add_argument('pretrain-teacher', action='store_true', default=False,
+    parser.add_argument('--pretrain-teacher', action='store_true', default=False,
                         help='whether or not to pretrain the comm game teacher')
     # This argument is a bit tricky: the idea is that Python can parse strings
     # as Python literals (including dicts) with the ast.literal_eval function
-    parser.add_argument('--datapaths-student', type=ast.literal_eval, 
-                        default=DEFAULT_STUDENT_DATAPATHS,
-                        help='paths to data files; input as python dict notation'
-                        'for each dataset specified in --data'
-                        'NOTE: only use single quote marks in the dict')
     # TODO finish this
     # NOTE I will have to change the type of data that the student accepts,
     # since I'll be generating it from the teacher data
     # (so at the very least it will be much easier that way)
-    parser.add_argument('--datapaths-teacher', type=ast.literal_eval, 
-                        default=DEFAULT_TEACHER_DATAPATHS,
+    parser.add_argument('--datapaths', type=ast.literal_eval, 
+                        default=DEFAULT_DATAPATHS,
                         help='paths to data files; input as python dict notation'
                         ' for each dataset specified in --data'
-                        ' NOTE: only use single quote marks in the dict'
-                        ' Also used as the communication game datapaths')
-    parser.add_argument('--batch-sizes', type=ast.literal_eval, 
+                        ' NOTE: only use single quote marks in the dict')
+    parser.add_argument('--indiv-bsizes', type=ast.literal_eval, 
                         default=DEFAULT_B_SIZES, metavar='N',
-                        help='input batch size for training'
+                        help='batch size for individual (pre)training'
                         ' input in the form of a Python dict: one size for each dataset'
                         ' (see help for the --datasets option)')
-    parser.add_argument('--epochs', type=int, nargs='+', default=[10], metavar='N',
-                        help='number of epochs to train'
+    parser.add_argument('--comm-bsizes', type=ast.literal_eval, 
+                        default=DEFAULT_B_SIZES, metavar='N',
+                        help='batch size for communication training'
+                        ' input in the form of a Python dict: one size for each dataset'
+                        ' (see help for the --datapaths option)')
+    parser.add_argument('--indiv-epochs', type=int, nargs='+', default=[10], metavar='N',
+                        help='number of epochs to (pre)train individual models'
+                       ' (input one value for each dataset or one value total'
+                       ' to be applied to every dataset)')
+    parser.add_argument('--comm-epochs', type=int, nargs='+', default=[10], metavar='N',
+                        help='number of epochs to train communication model'
                        ' (input one value for each dataset or one value total'
                        ' to be applied to every dataset)')
     parser.add_argument('--lr', type=float, default=3e-4, metavar='LR',
                         help='learning rate')
     parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--bn', action='store_true', default=False,
-                        help='use batch normalization')
     parser.add_argument('--embeddings', type=str, default='glove',
                         help='embeddings to use')
     #  parser.add_argument('--out-dir', type=str, default='/mnt/fs5/schopra/ratchet/lfl/student/concept/models',
@@ -146,19 +170,32 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=None,
                         help='random seed to use')
 
+    # Argument post-processing
     args = parser.parse_args()
     args.cuda = args.cuda and torch.cuda.is_available()
 
-    # Argument post-processing
-    if len(args.batch_sizes) == 1:
-        args.batch_sizes = args.batch_sizes * len(args.data)
-    if len(args.epochs) == 1:
-        args.epochs = args.epochs * len(args.data)
+    assert any([args.teacher_dsets, args.student_dsets, args.comm_dsets]), \
+            "Please set either teacher-dsets, student-dsets or comm-dsets."
+    assert not(args.teacher_dsets and (args.student_dsets or args.comm_dsets)), \
+            "Please run one experiment at a time (use student-dsets \
+            to indicate pretraining datasets for the comm game.)"
+    # Check validity of datasets argument
+    for dset_list in [args.teacher_dsets, args.student_dsets, args.comm_dsets]:
+        if dset_list is not None:
+            assert all([dset in VALID_DATASETS for dset in dset_list]), \
+                    "Unknown dataset in --data option!"
 
-    assert any(args.teacher_data, args.student_data, args.comm_data), \
-            "Please set either teacher-data, student-data or comm-data."
-    assert (not args.teacher_data and args.comm_data), "Please use student-data \
-            to indicate pretraining datasets for the comm game."
+    if args.teacher_dsets or args.student_dsets:
+        if len(args.indiv_bsizes) == 1:
+            # Hacky python trick: the or below returns the nonempty one
+            args.indiv_bsizes *= len(args.teacher_dsets or args.student_dsets)
+        if len(args.indiv_epochs) == 1:
+            args.indiv_epochs *= len(args.teacher_dsets or args.student_dsets)
+    if args.comm_dsets:
+        if len(args.comm_bsizes) == 1:
+            args.comm_bsizes *= len(args.comm_dsets)
+        if len(args.comm_epochs) == 1:
+            args.comm_epochs *= len(args.comm_dsets)
 
     return args
 
@@ -169,14 +206,7 @@ def make_model_dir(out_dir):
     out_dir = os.path.join(out_dir, 'models')
     if not os.path.isdir(os.path.join(out_dir, model_id)):
         os.makedirs(os.path.join(out_dir, model_id))
-
-    # Check validity of datasets argument
-    assert all([dataset in VALID_DATASETS for dataset in args.data]), \
-            "Unknown dataset in --data option!"
-    # Construct Data Loaders &  Iterators
-    ### Default args.data is /data/concept/{}/vectorized/concat_informative_dataset
-    ### The actual '{}' folders are (raw; maybe not used here), test, train and val
-    ### {}_data is a TabularDataset (torchtext.data object)
+    return model_id
 
 def get_loaders(dsets, text_field=None):
     '''
@@ -191,7 +221,7 @@ def get_loaders(dsets, text_field=None):
         # If text_field is None, then load_dataset creates a text field and returns it
         # Otherwise it just uses the one passed in
         # (If it was previously None, now it will be the one that was created)
-        train, val, text_field = load_dataset(args.datapaths[dataset], 
+        train, val, text_field = load_dataset(args.datapaths[dset], 
                                           lemmatized=args.lemmatized,
                                           text_field=text_field)
         train_data.append(train)
@@ -199,9 +229,10 @@ def get_loaders(dsets, text_field=None):
             device = torch.device('cpu')
         else:
             device = torch.device('cuda')
+            # XXX use different batch sizes for comm game (i.e. actually use that arg)
         train_loader, val_loader = ttdata.Iterator.splits(
             (train, val), sort_key=lambda x: len(x.text), sort_within_batch=True,
-            batch_sizes=(args.batch_sizes[dataset], args.batch_sizes[dataset]), device=device)
+            batch_sizes=(args.indiv_bsizes[dset], args.indiv_bsizes[dset]), device=device)
 
         loaders[dset] = dict(train=train_loader, val=val_loader)
 
@@ -217,45 +248,69 @@ def get_loaders(dsets, text_field=None):
     else:
         raise Exception("Invalid Embeddings Type")
     text_field.build_vocab(*train_data, vectors=vectors)
-    torch.save(text_field, os.path.join(args.out_dir, model_id, dataset+'_vocab.pkl'), pickle_module=dill)
+    # XXX Do we need this?
+    # torch.save(text_field, os.path.join(args.out_dir, model_id, dataset+'_vocab.pkl'), pickle_module=dill)
     return loaders, text_field
 
-def make_kwargs(args, text_field, other):
+def make_kwargs(args, seed, text_field, model_id, other={}):
     kwargs = {
+        'model_id': model_id,
         'stim_model_type': 'featureMLP',
+        'seed': seed,
+        'cuda': args.cuda,
 
-        'h_dim_l': args.hidden_dim_l,
-        'o_dim_l': args.output_dim_l,
-        'd_prob_l': args.dropout_l,
-        'num_layers_l': args.num_layers_l,
+        'h_dim_l_student': args.hidden_dim_l_student,
+        'o_dim_l_student': args.output_dim_l_student,
+        'd_prob_l_student': args.dropout_l_student,
+        'num_layers_l_student': args.num_layers_l_student,
 
         'with_self_att': args.self_att,
         'd_dim_l': args.d_dim_l,
         'r_dim_l': args.r_dim_l,
 
-        'i_dim_s': args.input_dim_s,
-        'h_dim_s': args.hidden_dim_s,
-        'o_dim_s': args.output_dim_s,
-        'd_prob_s': args.dropout_s,
-        'num_layers_s': args.num_layers_s,
+        'i_dim_s_student': args.input_dim_s_student,
+        'h_dim_s_student': args.hidden_dim_s_student,
+        'o_dim_s_student': args.output_dim_s_student,
+        'd_prob_s_student': args.dropout_s_student,
+        'num_layers_s_student': args.num_layers_s_student,
 
-        'hidden_dim_student': args.hidden_dim_student,
+        'h_dim_student': args.hidden_dim_student,
         'num_layers_student': args.num_layers_student,
         'd_prob_student': args.dropout_student,
-        'output_dim': 2,
 
-        'batch_norm': args.bn,
+        'bn_student': args.bn_student,
+
+        'h_dim_l_teacher': args.hidden_dim_l_teacher,
+        'o_dim_l_teacher': args.output_dim_l_teacher,
+        'd_prob_l_teacher': args.dropout_l_teacher,
+        'num_layers_l_teacher': args.num_layers_l_teacher,
+
+        'self_att': args.self_att,
+        'd_dim_l': args.d_dim_l,
+        'r_dim_l': args.r_dim_l,
+
+        'i_dim_s_teacher': args.input_dim_s_teacher,
+        'h_dim_s_teacher': args.hidden_dim_s_teacher,
+        'o_dim_s_teacher': args.output_dim_s_teacher,
+        'd_prob_s_teacher': args.dropout_s_teacher,
+        'num_layers_s_teacher': args.num_layers_s_teacher,
+        'bn_teacher': args.bn_teacher,
+
+        'pretrain_teacher': args.pretrain_teacher,
+
         'embeddings': args.embeddings,
-        'model_id': model_id,
+
         'date:': time.strftime("%Y-%m-%d %H:%M"),
-        'data': args.data,
-        'batch_sizes': args.batch_sizes,
-        'epochs': args.epochs,
+        'teacher_dsets': args.teacher_dsets,
+        'student_dsets': args.student_dsets,
+        'comm_dsets': args.comm_dsets,
+        'indiv_bsizes': args.indiv_bsizes,
+        'comm_bsizes': args.comm_bsizes,
+        'indiv_epochs': args.indiv_epochs,
+        'comm_epochs': args.comm_epochs,
         'lemmatized': args.lemmatized,
         'datapaths': args.datapaths,
 
-        # XXX not that ugly, but note that fields is still from the last
-        # dataset in the for loop above
         'unk_index': text_field.vocab.stoi[Constants.UNK_TOKEN],
         'pad_index': text_field.vocab.stoi[Constants.PAD_TOKEN],
         'start_index': text_field.vocab.stoi[Constants.START_TOKEN],
@@ -264,27 +319,11 @@ def make_kwargs(args, text_field, other):
         **other
     }
 
-    # Reality checking for vocab indices
-    ### TODO make this cleaner (or figure out how to set these indices manually?)
-    ### TODO assert that vocab vectors tensors are equal
-    '''
-    assert all([dset['fields']['text'][1].vocab.itos == fields['text'][1].vocab.itos for dset in data.values()])
-    assert all([dset['fields']['text'][1].vocab.stoi[Constants.UNK_TOKEN] == \
-                kwargs['unk_index'] for dset in data.values()])
-    assert all([dset['fields']['text'][1].vocab.stoi[Constants.PAD_TOKEN] == \
-                kwargs['pad_index'] for dset in data.values()])
-    assert all([dset['fields']['text'][1].vocab.stoi[Constants.START_TOKEN] == \
-                kwargs['start_index'] for dset in data.values()])
-    assert all([dset['fields']['text'][1].vocab.stoi[Constants.END_TOKEN] == \
-                kwargs['end_index'] for dset in data.values()])
-    '''
-
-    with open(os.path.join(model_ids_dir, '{}.json'.format(kwargs['model_id'])), 'w') as id_f, \
-            open(os.path.join(args.out_dir, model_id, 'params.json'), 'w') as params_f:
+    with open(os.path.join(args.out_dir, 'models', model_id, 'params.json'), 
+              'w') as params_f:
         # indent: when set to something besides None, enables pretty-printing
         # of json file; the specific integer sets the tab size in num. spaces
         json.dump(kwargs, params_f, indent=2)
-        json.dump(kwargs, id_f, indent=2)
 
     # (placing this code after the dump since the field isn't valid JSON)
     kwargs['vocab_field'] = text_field
@@ -312,7 +351,7 @@ def get_samples_and_prototypes(model, loader):
     return df
         
 
-def train(model, epoch, train_loader):
+def train(model, epoch, train_loader, optimizer):
     """ Train model for a single epoch.
     """
     ### Model is declared in global space 
@@ -334,11 +373,8 @@ def train(model, epoch, train_loader):
     for batch_idx, batch in enumerate(train_loader):
         optimizer.zero_grad()
         loss, logits = model.compute_loss(batch)
-
-        if backprop:
-            loss.backward()
-            optimizer.step()
-
+        loss.backward()
+        optimizer.step()
         # Update progress
         #acc_meter.update(logits, batch)
         loss_meter.update(loss.data.item(), batch.batch_size)
@@ -376,70 +412,66 @@ def val(model, val_loader):
     #acc_meter.print()
     return loss_meter.avg#, acc_meter
 
-def train_model(model, data, n_epochs, **kwargs):
+def train_model(model, loaders, n_epochs, **kwargs):
     if kwargs['cuda']:
         model = model.to('cuda')
+    ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
+    ### based on recent gradients (low gradients --> high LR, vice versa)
+    ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
+    ### People apparently just use it because it works well
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
-    for dset_num, dset in enumerate(args.data):
-        ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
-        ### based on recent gradients (low gradients --> high LR, vice versa)
-        ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
-        ### People apparently just use it because it works well
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    best_acc = 0.0
+    best_epoch = -1
+    ### Losses format: epoch1_loss_train, ..., epochn_loss_train
+    ###                epoch1_loss_val,   ..., epochn_loss_val
+    losses = np.zeros((n_epochs, 2))
+    for epoch in range(1, n_epochs + 1):
+        train_loader = loaders['train']
+        train_loss = train(model, epoch, train_loader, optimizer)
+        val_loader = loaders['val']
+        val_loss = val(model, val_loader)
+        losses[epoch - 1, 0] = train_loss
+        losses[epoch - 1, 1] = val_loss
 
-        best_acc = 0.0
-        best_epoch = -1
-        ### Losses format: epoch1_loss_train, ..., epochn_loss_train
-        ###                epoch1_loss_val,   ..., epochn_loss_val
-        losses = np.zeros((args.epochs[dset_num], 2))
-        for epoch in range(1, args.epochs[dset_num] + 1):
-            train_loader = data[dset]['train']
-            train_loss = train(model, epoch, train_loader)
-            val_loader = data[dset]['val']
-            val_loss = val(model, val_loader)
-            losses[epoch - 1, 0] = train_loss
-            losses[epoch - 1, 1] = val_loss
-
-            # keep track of best weights -- this is equivalent
-            # to a simple version of early-stopping
-            '''
-            is_best = best_acc < val_acc_meter.compute_gt_acc()
-            if is_best:
-                best_acc = val_acc_meter.compute_gt_acc()
-                best_epoch = epoch
-
-            # save weights to dict
-            ### This really should just be taken from kwargs
-            save_student_checkpoint(
-                {
-                    'state_dict': teacher.state_dict(),
-                    'val_loss': val_loss,
-                    'vocab_file': os.path.join(args.out_dir, model_id, 'vocab.pkl'),
-                    'optimizer': optimizer.state_dict(),
-                    'language_model_type': 'bilstm',
-                    'stim_model_type': 'featureMLP',
-                    'kwargs': kwargs
-                },
-                is_best,
-                os.path.join(args.out_dir, kwargs['model_id']), 
-                'checkpoint.pth.tar',
-                'model_best.pth.tar'
-            )
+        # keep track of best weights -- this is equivalent
+        # to a simple version of early-stopping
         '''
-        # plot loss over time
-        plt.figure()
-        plt.plot(range(args.epochs[dset_num]), losses[:, 0], '-', label='train')
-        plt.plot(range(args.epochs[dset_num]), losses[:, 1], '-', label='val')
-        plt.tight_layout()
-        plt.legend()
-        plt.savefig(os.path.join(args.out_dir, model_id, '{}_loss_{}.png'.format(dset, dset_num)))
+        is_best = best_acc < val_acc_meter.compute_gt_acc()
+        if is_best:
+            best_acc = val_acc_meter.compute_gt_acc()
+            best_epoch = epoch
 
+        # save weights to dict
+        ### This really should just be taken from kwargs
+        save_student_checkpoint(
+        {
+        'state_dict': teacher.state_dict(),
+        'val_loss': val_loss,
+        'vocab_file': os.path.join(args.out_dir, model_id, 'vocab.pkl'),
+        'optimizer': optimizer.state_dict(),
+        'language_model_type': 'bilstm',
+        'stim_model_type': 'featureMLP',
+        'kwargs': kwargs
+        },
+        is_best,
+        os.path.join(args.out_dir, kwargs['model_id']), 
+        'checkpoint.pth.tar',
+        'model_best.pth.tar'
+        )
+        '''
+    return losses
+
+def plot_losses(losses, dest):
     '''
-    print("Loading best model from disk ...")
-    teacher = load_student_checkpoint(os.path.join(args.out_dir, model_id, 'model_weights', 'model_best.pth.tar'), use_cuda=args.cuda)
-    train(best_epoch, False)
-    val()
+    Plot losses over time.
     '''
+    plt.figure()
+    plt.plot(range(len(losses)), losses[:, 0], '-', label='train')
+    plt.plot(range(len(losses)), losses[:, 1], '-', label='val')
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig(dest)
 
 def output_samples_and_prototypes(speaker, train_loader, val_loader):
     train_samples = get_samples_and_prototypes(train_loader)
@@ -451,18 +483,46 @@ def output_samples_and_prototypes(speaker, train_loader, val_loader):
 if __name__ == "__main__":
     args = parse_args()
     seed = set_seeds(args.seed)
-    make_model_dir()
-    kwargs = make_kwargs(args, seed)
+    model_id = make_model_dir(args.out_dir)
     # TODO add back in normal single-model experiments
     if args.comm_dsets is not None:
-        student_loaders, text_field = get_loaders(args.student_dsets, 'student')
-        # Get student pretraining dataset loaders
+        # XXX Using one set of loaders for pretraining right now
+        # will this work???
+        # XXX If this does work, don't need to bother with passing in text_field
+        # If not pretraining at all, still load in all datasets to allow teacher to
+        # use vocabulary from all datasets
+        if args.student_dsets is None:
+            pretrain_dsets = VALID_STUDENT_DATASETS
+        else:
+            pretrain_dsets = args.student_dsets
+        loaders, text_field = get_loaders(pretrain_dsets)
+        kwargs = make_kwargs(args, seed, text_field, model_id)
         # Initialize student, train it on its pretraining dsets (initialize to use all vocab if not pretraining)
         student = Student(**kwargs)
-        train_model(student)
-        # If pretraining teacher, get teacher pretraining dataset loaders
+        for dset_num, dset in enumerate(args.student_dsets):
+            losses = train_model(student, 
+                                 loaders[dset],
+                                 args.indiv_epochs[dset_num],
+                                 **kwargs)
+            # XXX this is kinda ugly (more like ugly as all get out)
+            plot_dest = os.path.join(args.out_dir, 
+                                'models',
+                                model_id, 
+                                'student_{}_loss_{}.png'.format(dset, dset_num))
+            plot_losses(losses, plot_dest)
+        teacher = Teacher(**kwargs)
         if args.pretrain_teacher:
-            teacher_loaders = get_loaders(args.student_dsets, text_field=text_field)
+            for dset_num, dset in enumerate(args.student_dsets):
+                train_model(teacher, 
+                            loaders[dset], 
+                            args.indiv_epochs[dset_num], 
+                            **kwargs)
+                plot_dest = os.path.join(args.out_dir, 
+                                         'models',
+                                         model_id, 
+                                         'teacher_{}_loss_{}.png'.format(dset, dset_num))
+                plot_losses(losses, plot_dest)
+
             # Load in same datasets as for student pretraining
             # XXX First try using different field objects in the hopes that they use the same stoi
             # If not, use the same object, and figure out how not to share weights (it should be good enough to just have different torch embedding objs

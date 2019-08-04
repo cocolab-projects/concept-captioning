@@ -26,13 +26,12 @@ class RNNDecoder(nn.Module):
         self.vocab_size = self.embedding.num_embeddings
         # Initialize hidden/cell initializers
         # o_dim_s: dimensions of stimulus representation (*2 since we concatenate two of them)
-        self.init_hidden = nn.Linear(kwargs['o_dim_s']*2, kwargs['h_dim_l'])
-        self.init_cell = nn.Linear(kwargs['o_dim_s']*2, kwargs['h_dim_l'])
-        self.hidden_dim = kwargs['h_dim_l']
-        # Here we use a "Gated recurrent unit", an LSTM variant.
-        self.LSTM = nn.LSTM(self.embedding_dim, kwargs['h_dim_l'], batch_first = True)
+        self.init_hidden = nn.Linear(kwargs['o_dim_s_teacher']*2, kwargs['h_dim_l_teacher'])
+        self.init_cell = nn.Linear(kwargs['o_dim_s_teacher']*2, kwargs['h_dim_l_teacher'])
+        self.hidden_dim = kwargs['h_dim_l_teacher']
+        self.LSTM = nn.LSTM(self.embedding_dim, kwargs['h_dim_l_teacher'], batch_first = True)
         # This is the linear layer that goes from RNN hidden dimension -> output vocab size (one for each word embedding)
-        self.outputs2vocab = nn.Linear(kwargs['h_dim_l'], self.vocab_size)
+        self.outputs2vocab = nn.Linear(kwargs['h_dim_l_teacher'], self.vocab_size)
 
     def forward(self, img, lang, length):
         """

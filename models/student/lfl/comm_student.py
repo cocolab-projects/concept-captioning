@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pack_padded_sequence
 
-from models.student.lfl.language.bi_lstm import BiLSTM
+from models.student.lfl.language.comm_bi_lstm import BiLSTM
 from models.student.lfl.language.self_attention import SelfAttention
 from models.student.lfl.mlp import MLP
 
@@ -28,32 +28,27 @@ class Student(nn.Module):
         @param **kwargs: parameters associated with initializing the language model
             and the stimulus model.
         """
-        super(MultiTaskStudent, self).__init__()
-        if kwargs['language_model_type'] == 'bilstm':
-            self.languageModel = BiLSTM(
-                h_dim=kwargs['h_dim_lang'],
-                o_dim=kwargs['o_dim_lang'],
-                d_prob=kwargs['dropout_lang'],      
-                with_self_att=kwargs['self_att'],      
-                d_dim=kwargs['d_dim_lang'],      
-                r_dim=kwargs['r_dim_lang'],      
-                num_layers=kwargs['num_layers_lang'],      
-                embeddings=kwargs['embeddings'],
-                concept_vocab_field=kwargs['concept_vocab_field'],
-                ref_vocab_field=kwargs['reference_vocab_field'],
-                task=kwargs['task']
-            )
-        else:
-            raise Exception('Invalid Language Model')
+        super(Student, self).__init__()
+
+        self.languageModel = BiLSTM(
+            h_dim=kwargs['h_dim_l_student'],
+            o_dim=kwargs['o_dim_l_student'],
+            d_prob=kwargs['d_prob_l_student'],      
+            with_self_att=kwargs['with_self_att'],      
+            d_dim=kwargs['d_dim_l'],      
+            r_dim=kwargs['r_dim_l'],      
+            num_layers=kwargs['num_layers_l_student'],      
+            vocab_field=kwargs['vocab_field'],
+        )
         
         if kwargs['stim_model_type'] == 'featureMLP':
             self.stimModel = MLP(
-                i_dim=kwargs['i_dim_stim'],
-                h_dim=kwargs['h_dim_stim'],
-                o_dim=kwargs['o_dim_stim'],
-                d_prob=kwargs['dropout_stim'],
-                batch_norm=kwargs['bn'],
-                num_layers=kwargs['num_layers_stim'],
+                i_dim=kwargs['i_dim_s_student'],
+                h_dim=kwargs['h_dim_s_student'],
+                o_dim=kwargs['o_dim_s_student'],
+                d_prob=kwargs['d_prob_s_student'],
+                batch_norm=kwargs['bn_student'],
+                num_layers=kwargs['num_layers_s_student'],
             )
         elif kwargs['stim_model_type'] == 'resnet':
             self.stimModel = models.resnet18(pretrained=kwargs['pretrained'])
@@ -61,68 +56,90 @@ class Student(nn.Module):
         else:
             raise Exception('Invalid Stimulus Model')
             
-        self.rep_model = MLP(
-            i_dim=kwargs['o_dim_lang'] + kwargs['o_dim_stim'],
+        self.comparator = MLP(
+            i_dim=kwargs['o_dim_l_student'] + kwargs['o_dim_s_student'],
             h_dim=kwargs['h_dim_student'],
-            o_dim=kwargs['h_dim_student'],
-            d_prob=kwargs['dropout_student'],
-            batch_norm=kwargs['bn'],
+            o_dim=1,
+            d_prob=kwargs['d_prob_student'],
+            batch_norm=kwargs['bn_student'],
             num_layers=kwargs['num_layers_student'],
         )
 
-        self.ref_model = MLP(
-            i_dim=kwargs['h_dim_student'],
-            h_dim=kwargs['h_dim_student'],
-            o_dim=1,
-            d_prob=kwargs['dropout_student'],
-            batch_norm=kwargs['bn'],
-            num_layers=kwargs['num_layers_student'],            
-        )
+        self.cuda = kwargs['cuda']
+        self.self_att = kwargs['self_att']
+        # Store this for computing attention loss later
+        self.r_dim = kwargs['r_dim_l']
 
-    def forward(self, x1, x2, x1_lengths, use_concept=False):
-        """ x1: language (describing concept)
-            x2: stimulus (from test set)
-            x1_lengths: true lengths of text in x1
+    def forward(self, lang, stims, lang_lengths):
+        """ lang: language (describing concept)
+            stims: stimulus (from test set)
+            lang_lengths: true lengths of text in lang
             use_concept: T/F use concept model
         """
-        languageRep, alphas = self.languageModel(x1, x1_lengths, use_concept_vocab=use_concept)
-        stimRep = self.stimModel(x2)
+        languageRep, alphas = self.languageModel(lang, lang_lengths)
+        stimRep = self.stimModel(stims)
         joinedRep = torch.cat([languageRep, stimRep], dim=1)
-        sharedRep = self.shared_rep_model(joinedRep)
-        if use_concept:
-            logits = self.concept_model(sharedRep)
-        else:
-            logits = self.ref_model(sharedRep)
+        logits = self.comparator(joinedRep)
         return logits, alphas
 
-def compute_loss(batch):
+    def compute_loss(self, batch):
         """ Compute reference game loss.
         """
-        breakpoint()
-        batch_size = batch.batch_size
-        (x_l, x_l_lengths) = batch.message
+        stims, labels, lang, lang_lengths = self.get_inputs(batch)
+        
+        logits, alphas = self(lang, stims, lang_lengths)
 
-        if args.embeddings == "elmo":
-            raise Exception('Elmo not implemented')
-        else:
-            max_msg_size = x_l_lengths[0]
-            x_l = torch.cat([x_l, x_l, x_l], dim=1) # repeat 3 times for 3 stims
-            x_l = x_l.view(-1, max_msg_size)
-            x_l_lengths = x_l_lengths.unsqueeze(dim=1)
-            x_l_lengths = torch.cat([x_l_lengths, x_l_lengths, x_l_lengths], dim=1)
-            x_l_lengths = x_l_lengths.view(-1, 1)
-            x_l_lengths = x_l_lengths.squeeze()
-        x_s = construct_ref_stim_reps(batch, ref_stim_fields)
-
-        if kwargs['cuda']:
-            x_s = x_s.to('cuda')
-        logits, alphas = student(x_l, x_s, x_l_lengths, use_concept=False)
-        y = ref_construct_y(batch_size)
-
-        if kwargs['cuda']:
-            y = y.to('cuda')
-        logits = logits.view(batch_size, 3)
-        loss = F.cross_entropy(logits, y)
-        loss += compute_att_loss(alphas)
+        # breakpoint()
+        logits = logits.view(-1, 3)
+        loss = F.cross_entropy(logits, labels)
+        loss += self.compute_att_loss(alphas)
         return loss, logits
 
+    ### HELPER METHODS ###
+    def get_inputs(self, batch):
+        (lang, lang_lengths) = batch.text 
+        # TODO throw an error if they try to use elmo?
+        max_msg_size = lang.shape[1]
+        lang = torch.cat([lang, lang, lang], dim=1) # repeat 3 times for 3 stims
+        lang = lang.view(-1, max_msg_size)
+        lang_lengths = lang_lengths.unsqueeze(dim=1)
+        lang_lengths = torch.cat([lang_lengths, lang_lengths, lang_lengths], dim=1)
+        lang_lengths = lang_lengths.view(-1, 1)
+        lang_lengths = lang_lengths.squeeze()
+        stims = self.construct_stim_reps(batch)
+
+        # Convert the one-hot labels into ints to use with cross-entropy
+        _, labels = batch.labels.max(dim=1)
+        if self.cuda:
+            lang = lang.to('cuda')
+            lang_lengths = lang_lengths.to('cuda')
+            stims = stims.to('cuda')
+            labels = labels.to('cuda')
+
+        return stims, labels, lang, lang_lengths
+
+    def construct_stim_reps(self, batch):
+        """ Construct stimulus representations for batch of dimension
+            (3 x batch dimension, stim representation).
+            target, distr1, distr2
+        """
+        target = batch.__dict__[str(0)]
+        distr1 = batch.__dict__[str(1)]
+        distr2 = batch.__dict__[str(2)]
+        stims = torch.cat([target, distr1, distr2], dim=1).float()
+        return stims.view(-1, 78)
+
+    def compute_att_loss(self, alphas):
+        """ Compute loss term associated with self attention. 
+        """
+        if self.self_att:
+            assert(alphas is not None), "Self Attention should have been applied"
+            I = torch.eye(self.r_dim)
+            if self.cuda:
+                I = I.to('cuda')
+            I = I.repeat(alphas.shape[0], 1, 1)
+            alphas_t = torch.transpose(alphas, 1, 2).contiguous()
+            extra_loss = torch.norm(torch.bmm(alphas, alphas_t) - I)
+            return extra_loss
+        else:
+            return 0.0

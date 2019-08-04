@@ -32,15 +32,15 @@ class Teacher(nn.Module):
             ### Note that MLP is defined manually
             self.stimModel = MLP(
                 ### Input, hidden and output dimensions
-                i_dim=kwargs['i_dim_s'],
-                h_dim=kwargs['h_dim_s'],
-                o_dim=kwargs['o_dim_s'],
+                i_dim=kwargs['i_dim_s_teacher'],
+                h_dim=kwargs['h_dim_s_teacher'],
+                o_dim=kwargs['o_dim_s_teacher'],
                 ### Dropout probability for dropout layers
-                d_prob=kwargs['d_prob_s'],
+                d_prob=kwargs['d_prob_s_teacher'],
                 ### Whether or not to use batch normalization, where node activations are normalized by the batch mean and SD
                 ### This can mitigate negative effects on training speed of high variability of internal activations
-                batch_norm=kwargs['batch_norm'],
-                num_layers=kwargs['num_layers_s'],
+                batch_norm=kwargs['bn_teacher'],
+                num_layers=kwargs['num_layers_s_teacher'],
             )
         elif kwargs['stim_model_type'] == 'resnet':
             ### Indicates that we're using images; resnet (residual neural network) is a CNN
@@ -49,17 +49,11 @@ class Teacher(nn.Module):
 
         else:
             raise Exception('Invalid Stimulus Model')
-            
-        ### MLP to go from language rep + stimulus rep to probability that 
-        ### the concept description applies to the stimulus
-        # self.mlp = MLP(
-        #     i_dim=kwargs['o_dim_l'] + kwargs['o_dim_s'],
-        #     h_dim=kwargs['hidden_dim_student'],
-        #     o_dim=kwargs['output_dim'],
-        #     d_prob=kwargs['d_prob_student'],
-        #     batch_norm=kwargs['batch_norm'],
-        #     num_layers=kwargs['num_layers_student'],
 
+        self.cuda = kwargs['cuda']
+        self.embeddings = kwargs['embeddings']
+        self.pad_index = kwargs['pad_index']
+            
     ### forward: defines how the module transforms input to output
     ### technically just a function on any arbitrary input, can give any arbitrary output?
     ### called using the name of the object, e.g. teacher(input)
@@ -120,10 +114,10 @@ class Teacher(nn.Module):
                        pad=kwargs['pad_index'])
         return self.decoder.sample(hidden_input, indices, greedy=kwargs['greedy_sampling'])
 
-    def compute_loss(batch):
+    def compute_loss(self, batch):
         """ Compute loss.
         """
-        stims, labels, language, lang_lengths = get_inputs(batch)
+        stims, labels, language, lang_lengths = self.get_inputs(batch)
         logits = self(stims, labels, language, lang_lengths)
         # logits shape: (batch size, max seq length, num vocab)
         # Assume rnn_decoder is your language model;
@@ -153,7 +147,7 @@ class Teacher(nn.Module):
         loss = loss.view(batch_size, (max_seq_len - 1))
 
         # Mask out losses for pad tokens
-        loss *= (language != kwargs['pad_index']).float()
+        loss *= (language != self.pad_index).float()
         # Sum up the loss for each token prediction to get a total loss per language
         total_losses = torch.sum(loss, dim=1)
         # Normalize total loss for each sequence by its length
@@ -164,7 +158,7 @@ class Teacher(nn.Module):
 
 
 ### HELPER METHODS ###
-    def get_inputs(batch):
+    def get_inputs(self, batch):
         '''
         Processes input of form 
             text: (language, lengths)
@@ -179,22 +173,22 @@ class Teacher(nn.Module):
         (language, lang_lengths) = batch.text
         ### language: (batch_size, max language length)
         ### lang_lengths: (batch_size)
-        if args.embeddings == "elmo":
+        if self.embeddings == "elmo":
             ### TODO change vars
             x_l_reversed = vocab_field.reverse(x_l.data)
             x_l = convert_to_elmo_ids(x_l_reversed, args.cuda)
             x_l_lengths = None
         ### get the (batch_size) tensor (basically list) of stimuli
-        stims = construct_stim_reps(batch)
+        stims = self.construct_stim_reps(batch)
         labels = batch.__dict__['labels'].float()
-        if args.cuda:
+        if self.cuda:
             stims = stims.to('cuda')
             language = language.to('cuda')
             lang_lengths = lang_lengths.to('cuda')
             labels = labels.to('cuda')
         return stims, labels, language, lang_lengths
 
-    def construct_stim_reps(batch):
+    def construct_stim_reps(self, batch):
         """
         Concats separate (num_features) stimulus tensors into one 
         (num_stimuli x num_features) tensor

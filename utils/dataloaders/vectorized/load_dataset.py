@@ -127,7 +127,7 @@ def load_dataset(file_template, lemmatized=False, text_field = None):
     test = TabularDataset(test_file, format='tsv', fields=column_field_types)
 
     # Not returning test file yet (saving that for the end of the experiment)
-    return train, val, column_field_types
+    return train, val, text_field
 
 ### Note: we're using torchtext for its torchtext.data ("data") library
 ### Apparently torchtext is a "text preprocessing" library, designed to work with any DL library
