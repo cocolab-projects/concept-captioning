@@ -206,7 +206,7 @@ def make_model_dir(out_dir):
     out_dir = os.path.join(out_dir, 'models')
     if not os.path.isdir(os.path.join(out_dir, model_id)):
         os.makedirs(os.path.join(out_dir, model_id))
-    return model_id
+    return model_id, os.path.join(out_dir, model_id)
 
 def get_loaders(dsets, text_field=None):
     '''
@@ -333,16 +333,18 @@ def get_samples_and_prototypes(model, loader):
     ### TODO why are so many words mapping to the unknown character?
     orig_lang, gen_lang, gen_lang_greedy, stims_list, pos_list, neg_list = [], [], [], [], [], []
     for batch in loader:
-        stims, labels, language, _ = get_inputs(batch)
+        stims, labels, language, _ = model.get_inputs(batch)
         orig_lang.extend(model.text_field.reverse(language))
-        gen_ids = teacher.sample(stims, labels, **kwargs)
+        # Get greedy samples
+        gen_ids = model.sample(stims, labels, greedy=True)
+        # Return value is (sampled ids, sampled lengths)
         gen_lang_greedy.extend(model.text_field.reverse(gen_ids[0]))
-        kwargs['greedy_sampling'] = False
-        gen_ids = teacher.sample(stims, labels, **kwargs)
+        # Get normal samples
+        gen_ids = model.sample(stims, labels, greedy=False)
         gen_lang.extend(model.text_field.reverse(gen_ids[0]))
-        kwargs['greedy_sampling'] = True
         stims_list.extend(stims.tolist())
-        pos_prototypes, neg_prototypes = teacher.get_prototypes(stims, labels)
+        # Get prototypes (for visualization)
+        pos_prototypes, neg_prototypes = model.get_prototypes(stims, labels)
         pos_list.extend(pos_prototypes.tolist())
         neg_list.extend(neg_prototypes.tolist())
     df = pd.DataFrame(
@@ -473,17 +475,17 @@ def plot_losses(losses, dest):
     plt.legend()
     plt.savefig(dest)
 
-def output_samples_and_prototypes(speaker, train_loader, val_loader):
-    train_samples = get_samples_and_prototypes(train_loader)
-    train_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_train_{}.csv'.format(dset, dset_num)), index=False)
-    val_samples = get_samples_and_prototypes(val_loader)
-    val_samples.to_csv(os.path.join(args.out_dir, model_id, '{}_samples_val_{}.csv'.format(dset, dset_num)), index=False)
+def output_samples_and_prototypes(speaker, loaders, dest):
+    train_samples = get_samples_and_prototypes(speaker, loaders['train'])
+    train_samples.to_csv('_'.join([dest, 'train.csv']), index=False)
+    val_samples = get_samples_and_prototypes(speaker, loaders['val'])
+    val_samples.to_csv('_'.join([dest, 'val.csv']), index=False)
         
 
 if __name__ == "__main__":
     args = parse_args()
     seed = set_seeds(args.seed)
-    model_id = make_model_dir(args.out_dir)
+    model_id, model_dir = make_model_dir(args.out_dir)
     # TODO add back in normal single-model experiments
     if args.comm_dsets is not None:
         # XXX Using one set of loaders for pretraining right now
@@ -505,11 +507,9 @@ if __name__ == "__main__":
                                  args.indiv_epochs[dset_num],
                                  **kwargs)
             # XXX this is kinda ugly (more like ugly as all get out)
-            plot_dest = os.path.join(args.out_dir, 
-                                'models',
-                                model_id, 
+            dest = os.path.join(model_dir, 
                                 'student_{}_loss_{}.png'.format(dset, dset_num))
-            plot_losses(losses, plot_dest)
+            plot_losses(losses, dest)
         teacher = Teacher(**kwargs)
         if args.pretrain_teacher:
             for dset_num, dset in enumerate(args.student_dsets):
@@ -517,11 +517,12 @@ if __name__ == "__main__":
                             loaders[dset], 
                             args.indiv_epochs[dset_num], 
                             **kwargs)
-                plot_dest = os.path.join(args.out_dir, 
-                                         'models',
-                                         model_id, 
-                                         'teacher_{}_loss_{}.png'.format(dset, dset_num))
-                plot_losses(losses, plot_dest)
+                dest = os.path.join(model_dir, 
+                                    'teacher_{}_loss_{}.png'.format(dset, dset_num))
+                plot_losses(losses, dest)
+                dest = os.path.join(model_dir, 
+                                    'teacher_{}_samples_{}'.format(dset, dset_num))
+                output_samples_and_prototypes(teacher, loaders[dset], dest)
 
             # Load in same datasets as for student pretraining
             # XXX First try using different field objects in the hopes that they use the same stoi
