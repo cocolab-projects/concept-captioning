@@ -5,7 +5,7 @@ import numpy as np
 import torch.nn.functional as F
 from contextlib import nullcontext
 
-MAX_SEQ_LEN = 500  # Maximum decoded sequence length
+MAX_SEQ_LEN = 50  # Maximum decoded sequence length
 
 class RNNDecoder(nn.Module):
     """
@@ -15,7 +15,7 @@ class RNNDecoder(nn.Module):
     Also implements text generation either greedily (taking the argmax from the
     decoder) or sampling at test time
     """
-    def __init__(self, **kwargs):
+    def __init__(self, text_field, **kwargs):
         """
         `self.embedding` is a module of type `nn.Embedding`. This is
         essentially a matrix of size (n_embeddings x embedding_dim) where each
@@ -23,7 +23,7 @@ class RNNDecoder(nn.Module):
         """
         super(RNNDecoder, self).__init__()
         # Stores embeddings in self.embedding
-        self.build_embeddings(kwargs['vocab_field'])
+        self.build_embeddings(text_field)
         self.vocab_size = self.embedding.num_embeddings
         # Initialize hidden/cell initializers
         # o_dim_s: dimensions of stimulus representation (*2 since we concatenate two of them)
@@ -232,13 +232,14 @@ class RNNDecoder(nn.Module):
         states = (self.init_hidden(img), self.init_cell(img))
 
         lang_length = torch.ones(batch_size, dtype=torch.int64).to(img.device)
-        done_sampling = [False for _ in range(batch_size)]
+        done_sampling = [False]*batch_size
 
         # first input is SOS token
         lang = []
         lang_length = torch.ones(batch_size, dtype=torch.int64).to(img.device)
         inputs_onehot = torch.zeros(batch_size, self.vocab_size).to(img.device)
         inputs_onehot[:, indices['sos']] = 1.0
+        lang.append(inputs_onehot.unsqueeze(1))
 
         # compute embeddings
         # (batch, n_vocab) X (n_vocab, embed_dim) -> (batch, embed_dim)

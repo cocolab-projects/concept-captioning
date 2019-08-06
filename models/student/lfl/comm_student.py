@@ -23,10 +23,11 @@ class Student(nn.Module):
         logits for the probability that the given stimulus belongs to the class described
         by the language.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, text_field, **kwargs):
         """
         @param **kwargs: parameters associated with initializing the language model
             and the stimulus model.
+        @param text_field: the torchtext field defining the vocab to be used.
         """
         super(Student, self).__init__()
 
@@ -38,7 +39,7 @@ class Student(nn.Module):
             d_dim=kwargs['d_dim_l'],      
             r_dim=kwargs['r_dim_l'],      
             num_layers=kwargs['num_layers_l_student'],      
-            vocab_field=kwargs['vocab_field'],
+            vocab_field=text_field,
         )
         
         if kwargs['stim_model_type'] == 'featureMLP':

@@ -16,6 +16,7 @@ import numpy as np
 import revtok
 import sys
 import time
+import copy
 
 from models.teacher.teacher import Teacher
 from models.student.lfl.comm_student import Student
@@ -112,14 +113,14 @@ def parse_args():
     # if you want to train those models in isolation
     # If specifying comm datasets, use student datasets as pretraining data
     # It is expected to only run one of these types of experiments at a time
-    parser.add_argument('--teacher-dsets', type=str, nargs='*', default=None,
+    parser.add_argument('--teacher-dsets', type=str, nargs='*', default=[],
                         help='which data to train the teacher on,'
                         ' in which order (ref or concept)')
-    parser.add_argument('--student-dsets', type=str, nargs='*', default=None,
+    parser.add_argument('--student-dsets', type=str, nargs='*', default=[],
                         help='which data to train the student on,'
                         ' in which order (ref or concept);'
                         ' if comm-dsets is specified, this is used as pretraining data')
-    parser.add_argument('--comm-dsets', type=str, nargs='*', default=None,
+    parser.add_argument('--comm-dsets', type=str, nargs='*', default=[],
                         help='which data to play the communication game with,'
                         ' in which order (ref or concept)')
     parser.add_argument('--pretrain-teacher', action='store_true', default=False,
@@ -172,6 +173,8 @@ def parse_args():
                         help='enables or disables lemmatization for tokenization')
     parser.add_argument('--seed', type=int, default=None,
                         help='random seed to use')
+    parser.add_argument('--use-best', action='store_true', 
+                        help='stop training on each dset early')
 
     # Argument post-processing
     args = parser.parse_args()
@@ -184,7 +187,7 @@ def parse_args():
             to indicate pretraining datasets for the comm game.)"
     # Check validity of datasets argument
     for dset_list in [args.teacher_dsets, args.student_dsets, args.comm_dsets]:
-        if dset_list is not None:
+        if dset_list:
             assert all([dset in VALID_DATASETS for dset in dset_list]), \
                     "Unknown dataset in --data option!"
 
@@ -218,6 +221,8 @@ def get_loaders(dsets, text_field=None):
         text_field: the torchtext field object to use for the text column of the data
             use a previously generated text_field to ensure the same stoi mappings
     '''
+    # Don't build a new vocab if a text field was passed in
+    build_vocab = False if text_field else True
     loaders = {}
     train_data = []
     for dset in set(dsets):
@@ -250,17 +255,19 @@ def get_loaders(dsets, text_field=None):
         vectors = None
     else:
         raise Exception("Invalid Embeddings Type")
-    text_field.build_vocab(*train_data, vectors=vectors)
+    if build_vocab:
+        text_field.build_vocab(*train_data, vectors=vectors)
     # XXX Do we need this?
     # torch.save(text_field, os.path.join(args.out_dir, model_id, dataset+'_vocab.pkl'), pickle_module=dill)
     return loaders, text_field
 
-def make_kwargs(args, seed, text_field, model_id, other={}):
+def make_kwargs(args, seed, model_id, other={}):
     kwargs = {
         'model_id': model_id,
         'stim_model_type': 'featureMLP',
         'seed': seed,
         'cuda': args.cuda,
+        'use_best': args.use_best,
 
         'h_dim_l_student': args.hidden_dim_l_student,
         'o_dim_l_student': args.output_dim_l_student,
@@ -315,11 +322,6 @@ def make_kwargs(args, seed, text_field, model_id, other={}):
         'lemmatized': args.lemmatized,
         'datapaths': args.datapaths,
 
-        'unk_index': text_field.vocab.stoi[Constants.UNK_TOKEN],
-        'pad_index': text_field.vocab.stoi[Constants.PAD_TOKEN],
-        'start_index': text_field.vocab.stoi[Constants.START_TOKEN],
-        'end_index': text_field.vocab.stoi[Constants.END_TOKEN],
-
         **other
     }
 
@@ -329,8 +331,6 @@ def make_kwargs(args, seed, text_field, model_id, other={}):
         # of json file; the specific integer sets the tab size in num. spaces
         json.dump(kwargs, params_f, indent=2)
 
-    # (placing this code after the dump since the field isn't valid JSON)
-    kwargs['vocab_field'] = text_field
     return kwargs
 
 def get_samples_and_prototypes(model, loader):
@@ -397,11 +397,12 @@ def train(model, epoch, train_loader, optimizer):
     return loss_meter.avg
 
 
-def val(model, val_loader):
+def val(model, val_loader, use_acc=False):
     """ Run model through validation dataset.
     """
     loss_meter = AverageMeter()
-    #acc_meter = AccuracyMeter()
+    if use_acc:
+        acc_meter = AccuracyMeter()
     pbar = tqdm(total=len(val_loader))
     val_loader.init_epoch()
     model.eval()
@@ -410,15 +411,17 @@ def val(model, val_loader):
         for batch_idx, batch in enumerate(val_loader):
             loss, logits = model.compute_loss(batch)
             #loss += compute_self_att_loss(alphas)
-            #acc_meter.update(logits, batch)
+            if use_acc:
+                acc_meter.update(logits, batch)
             loss_meter.update(loss.data.item(), batch.batch_size)
             pbar.update()
     pbar.close()
     print('====> Validation set loss: {:.4f}'.format(loss_meter.avg))
-    #acc_meter.print()
+    if use_acc:
+        acc_meter.print()
     return loss_meter.avg#, acc_meter
 
-def train_model(model, loaders, n_epochs, **kwargs):
+def train_model(model, loaders, n_epochs, show_acc=False, **kwargs):
     if kwargs['cuda']:
         model = model.to('cuda')
     ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
@@ -432,6 +435,7 @@ def train_model(model, loaders, n_epochs, **kwargs):
     ### Losses format: epoch1_loss_train, ..., epochn_loss_train
     ###                epoch1_loss_val,   ..., epochn_loss_val
     losses = np.zeros((n_epochs, 2))
+    best_loss = 2^63 # arbitrary really large value
     for epoch in range(1, n_epochs + 1):
         train_loader = loaders['train']
         train_loss = train(model, epoch, train_loader, optimizer)
@@ -440,33 +444,11 @@ def train_model(model, loaders, n_epochs, **kwargs):
         losses[epoch - 1, 0] = train_loss
         losses[epoch - 1, 1] = val_loss
 
-        # keep track of best weights -- this is equivalent
-        # to a simple version of early-stopping
-        '''
-        is_best = best_acc < val_acc_meter.compute_gt_acc()
-        if is_best:
-            best_acc = val_acc_meter.compute_gt_acc()
-            best_epoch = epoch
+        if val_loss < best_loss:
+            best_loss = val_loss
+            best = copy.deepcopy(model)
 
-        # save weights to dict
-        ### This really should just be taken from kwargs
-        save_student_checkpoint(
-        {
-        'state_dict': teacher.state_dict(),
-        'val_loss': val_loss,
-        'vocab_file': os.path.join(args.out_dir, model_id, 'vocab.pkl'),
-        'optimizer': optimizer.state_dict(),
-        'language_model_type': 'bilstm',
-        'stim_model_type': 'featureMLP',
-        'kwargs': kwargs
-        },
-        is_best,
-        os.path.join(args.out_dir, kwargs['model_id']), 
-        'checkpoint.pth.tar',
-        'model_best.pth.tar'
-        )
-        '''
-    return losses
+    return losses, best
 
 def plot_losses(losses, dest):
     '''
@@ -490,39 +472,66 @@ if __name__ == "__main__":
     args = parse_args()
     seed = set_seeds(args.seed)
     model_id, model_dir = make_model_dir(args.out_dir)
-    # TODO add back in normal single-model experiments
-    if args.comm_dsets is not None:
-        # XXX Using one set of loaders for pretraining right now
-        # will this work???
-        # XXX If this does work, don't need to bother with passing in text_field
-        # If not pretraining at all, still load in all datasets to allow teacher to
-        # use vocabulary from all datasets
-        if args.student_dsets is None:
-            pretrain_dsets = VALID_STUDENT_DATASETS
+    kwargs = make_kwargs(args, seed, model_id)
+    if not args.comm_dsets:
+        if args.student_dsets:
+            loaders, text_field = get_loaders(args.student_dsets)
+            student = Student(text_field, **kwargs)
+            for dset_num, dset in enumerate(args.student_dsets):
+                losses, best = train_model(student,
+                                           loaders[dset],
+                                           args.indiv_epochs[dset_num],
+                                           **kwargs)
+                dest = os.path.join(model_dir,
+                                    'teacher_{}_loss{}.png'.format(dset, dset_num))
+                plot_losses(losses, dest)
         else:
-            pretrain_dsets = args.student_dsets
-        loaders, text_field = get_loaders(pretrain_dsets)
-        kwargs = make_kwargs(args, seed, text_field, model_id)
+            loaders, text_field = get_loaders(args.teacher_dsets)
+            teacher = Teacher(text_field, **kwargs)
+            for dset_num, dset in enumerate(args.teacher_dsets):
+                losses, best = train_model(teacher, 
+                                           loaders[dset], 
+                                           args.indiv_epochs[dset_num], 
+                                           **kwargs)
+                if args.use_best:
+                    teacher = best
+                dest = os.path.join(model_dir, 
+                                    'teacher_{}_loss_{}.png'.format(dset, dset_num))
+                plot_losses(losses, dest)
+                dest = os.path.join(model_dir, 
+                                    'teacher_{}_samples_{}'.format(dset, dset_num))
+                output_samples_and_prototypes(teacher, loaders[dset], dest)
+
+    elif args.comm_dsets:
         # Initialize student, train it on its pretraining dsets (initialize to use all vocab if not pretraining)
-        student = Student(**kwargs)
+        if args.student_dsets:
+            vocab_dsets = args.student_dsets
+        else:
+            vocab_dsets = VALID_STUDENT_DATASETS
+        loaders, text_field = get_loaders(vocab_dsets)
+        student = Student(text_field, **kwargs)
         for dset_num, dset in enumerate(args.student_dsets):
-            losses = train_model(student, 
-                                 loaders[dset],
-                                 args.indiv_epochs[dset_num],
-                                 **kwargs)
+            losses, best = train_model(student, 
+                                       loaders[dset],
+                                       args.indiv_epochs[dset_num],
+                                       **kwargs)
+            if args.use_best:
+                student = best
             # XXX this is kinda ugly (more like ugly as all get out)
             dest = os.path.join(model_dir, 
                                 'student_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
         # Initialize teacher and pretrain it on the same datasets
         # (if pretrain_teacher is set to true)
-        teacher = Teacher(**kwargs)
+        teacher = Teacher(text_field, **kwargs)
         if args.pretrain_teacher:
             for dset_num, dset in enumerate(args.student_dsets):
-                train_model(teacher, 
-                            loaders[dset], 
-                            args.indiv_epochs[dset_num], 
-                            **kwargs)
+                losses, best = train_model(teacher, 
+                                           loaders[dset], 
+                                           args.indiv_epochs[dset_num], 
+                                           **kwargs)
+                if args.use_best:
+                    teacher = best
                 dest = os.path.join(model_dir, 
                                     'teacher_{}_loss_{}.png'.format(dset, dset_num))
                 plot_losses(losses, dest)
@@ -531,12 +540,11 @@ if __name__ == "__main__":
                 output_samples_and_prototypes(teacher, loaders[dset], dest)
 
         # Train communication game
-        # TODO don't reload dsets we already have
-        # (just change the epoch size)
+        # TODO don't reload dsets we already have (just change the epoch size)
         loaders, _ = get_loaders(args.comm_dsets, text_field=text_field) 
         comm = CommGame(teacher, student, **kwargs)
         for dset_num, dset in enumerate(args.comm_dsets):
-            losses = train_model(comm, 
+            losses, best = train_model(comm, 
                         loaders[dset], 
                         args.comm_epochs[dset_num],
                         **kwargs)

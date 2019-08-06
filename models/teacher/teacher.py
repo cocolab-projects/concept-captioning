@@ -14,18 +14,20 @@ import numpy as np
 
 from models.student.lfl.mlp import MLP
 from models.teacher.language.rnn_decoder import RNNDecoder
+from utils.constants import Constants
 
 class Teacher(nn.Module):
     """ Teacher takes a concept (a set of images/feature vectors labeled as positive or negative)
     and outputs a natural language description of that concept    """
-    def __init__(self, **kwargs):
+    def __init__(self, text_field, **kwargs):
         """
         @param **kwargs: parameters associated with initializing the language model
             and the stimulus model.
+        @param text_field: the torchtext field defining the vocab to be used.
         """
         super(Teacher, self).__init__()
         
-        self.decoder = RNNDecoder(**kwargs)
+        self.decoder = RNNDecoder(text_field, **kwargs)
         ### Either way, stimModel outputs an embedded representation of the its inputs
         if kwargs['stim_model_type'] == 'featureMLP':
             ### Indicates that we're using vectorized features
@@ -52,10 +54,11 @@ class Teacher(nn.Module):
 
         self.cuda = kwargs['cuda']
         self.embeddings = kwargs['embeddings']
-        self.start_index = kwargs['start_index']
-        self.end_index = kwargs['end_index']
-        self.pad_index = kwargs['pad_index']
-        self.text_field = kwargs['vocab_field']
+        self.text_field = text_field
+        self.start_index = text_field.vocab.stoi[Constants.START_TOKEN]
+        self.end_index = text_field.vocab.stoi[Constants.END_TOKEN]
+        self.pad_index = text_field.vocab.stoi[Constants.PAD_TOKEN]
+        self.unk_index = text_field.vocab.stoi[Constants.UNK_TOKEN]
             
     ### forward: defines how the module transforms input to output
     ### technically just a function on any arbitrary input, can give any arbitrary output?

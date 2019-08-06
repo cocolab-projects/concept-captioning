@@ -83,27 +83,25 @@ class BiLSTM(nn.Module):
         )
         self.embed.weight.data.copy_(self.vocab_field.vocab.vectors)
 
-    def forward(self, x, lang_lengths, onehot=False):
+    def forward(self, lang, lang_lengths, onehot=False):
         """
-        @param x (torch.Tensor): input text tensor (b, l) where b is batch size,
+        @param lang (torch.Tensor): input text tensor (b, l) where b is batch size,
             l is largest input sequence length (after padding)
-        @param batch_lengths (torch.Tensor): true lengths of inputs in x
+        @param batch_lengths (torch.Tensor): true lengths of inputs in lang
 
-        @returns language_rep (torch.Tensor): representation of inputted x (b, o_dim) where
+        @returns language_rep (torch.Tensor): representation of inputted lang (b, o_dim) where
             b is batch size and o_dim is output dimension
         """
-
+        sorted_lengths, sorted_idx = torch.sort(lang_lengths, descending=True)
+        lang = lang[sorted_idx]
         if onehot:
             # (b, max_seq_len, n_vocab) X (n_vocab, embed_dim) -> (b, max_seq_len, embed_dim)
-            embeddings = x @ self.embed.weight
+            embeddings = lang @ self.embed.weight
         else:
-            embeddings = self.embed(x)
-        sorted_lengths, sorted_idx = torch.sort(lang_lengths, descending=True)
-        embeddings = embeddings[sorted_idx]
-
-        X = pack_padded_sequence(embeddings, sorted_lengths, batch_first=True) # (b, l, w_e)
+            embeddings = self.embed(lang)
+        packed_lang = pack_padded_sequence(embeddings, sorted_lengths, batch_first=True) # (b, l, w_e)
         
-        hiddens, (state, _) = self.lstm(X)
+        hiddens, (state, _) = self.lstm(packed_lang)
         hiddens, _ = pad_packed_sequence(hiddens, batch_first=True) # (b, l, h_d * 2)
 
         # TODO check that this should be sorted_lengths, and that we even need it to be a list at all

@@ -31,7 +31,6 @@ class CommGame(nn.Module):
 
         self.teacher = teacher
         self.student = student
-        student.eval()
         
         # self.cuda = kwargs['cuda']
         # self.embeddings = kwargs['embeddings']
@@ -50,6 +49,11 @@ class CommGame(nn.Module):
         """
         Compute loss.
         """
+        # TODO change this to Jesse's param freezing and/or check if that's necessary
+        if fix_student:
+            self.student.eval()
+        else:
+            self.student.train()
         # Get gumbel-softmax one-hot samples from teacher
         # Shape: (batch, max seq length, vocab size)
         stims, labels, _, _ = self.teacher.get_inputs(batch)
