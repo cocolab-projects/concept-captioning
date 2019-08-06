@@ -109,13 +109,16 @@ class Teacher(nn.Module):
         neg_prototypes = neg_prototypes / n_neg.unsqueeze(1).expand_as(pos_prototypes)
         return pos_prototypes, neg_prototypes
         
-    def sample(self, stims, labels, greedy=False):
+    def sample(self, stims, labels, greedy=False, train=False):
         pos_prototypes, neg_prototypes = self.get_prototypes(stims, labels)
         hidden_input = torch.cat((pos_prototypes, neg_prototypes), dim=1)
         indices = dict(sos=self.start_index,
                        eos=self.end_index,
                        pad=self.pad_index)
-        return self.decoder.sample(hidden_input, indices, greedy=greedy)
+        if train:
+            return self.decoder.sample_gumbel(hidden_input, indices)
+        else:
+            return self.decoder.sample(hidden_input, indices, greedy=greedy)
 
     def compute_loss(self, batch):
         """ Compute loss.

@@ -70,24 +70,25 @@ class Student(nn.Module):
         # Store this for computing attention loss later
         self.r_dim = kwargs['r_dim_l']
 
-    def forward(self, lang, stims, lang_lengths):
+    def forward(self, lang, stims, lang_lengths, onehot=False):
         """ lang: language (describing concept)
             stims: stimulus (from test set)
             lang_lengths: true lengths of text in lang
             use_concept: T/F use concept model
         """
-        languageRep, alphas = self.languageModel(lang, lang_lengths)
+        languageRep, alphas = self.languageModel(lang, lang_lengths, onehot=onehot)
         stimRep = self.stimModel(stims)
         joinedRep = torch.cat([languageRep, stimRep], dim=1)
         logits = self.comparator(joinedRep)
         return logits, alphas
 
-    def compute_loss(self, batch):
+    def compute_loss(self, batch, onehot=False):
+        return self.compute_loss_cleaned(*(self.get_inputs(batch, onehot=onehot)), onehot=onehot)
+
+    def compute_loss_cleaned(self, stims, labels, lang, lang_lengths, onehot=False):
         """ Compute reference game loss.
         """
-        stims, labels, lang, lang_lengths = self.get_inputs(batch)
-        
-        logits, alphas = self(lang, stims, lang_lengths)
+        logits, alphas = self(lang, stims, lang_lengths, onehot=onehot)
 
         # breakpoint()
         logits = logits.view(-1, 3)
@@ -96,12 +97,16 @@ class Student(nn.Module):
         return loss, logits
 
     ### HELPER METHODS ###
-    def get_inputs(self, batch):
+    def get_inputs(self, batch, onehot=False):
         (lang, lang_lengths) = batch.text 
         # TODO throw an error if they try to use elmo?
         max_msg_size = lang.shape[1]
         lang = torch.cat([lang, lang, lang], dim=1) # repeat 3 times for 3 stims
-        lang = lang.view(-1, max_msg_size)
+        if onehot:
+            lang = lang.view(-1, max_msg_size, lang.shape[2])
+        else:
+            lang = lang.view(-1, max_msg_size)
+
         lang_lengths = lang_lengths.unsqueeze(dim=1)
         lang_lengths = torch.cat([lang_lengths, lang_lengths, lang_lengths], dim=1)
         lang_lengths = lang_lengths.view(-1, 1)

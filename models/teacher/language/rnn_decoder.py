@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
 import numpy as np
 import torch.nn.functional as F
+from contextlib import nullcontext
 
 MAX_SEQ_LEN = 500  # Maximum decoded sequence length
 
@@ -32,6 +33,7 @@ class RNNDecoder(nn.Module):
         self.LSTM = nn.LSTM(self.embedding_dim, kwargs['h_dim_l_teacher'], batch_first = True)
         # This is the linear layer that goes from RNN hidden dimension -> output vocab size (one for each word embedding)
         self.outputs2vocab = nn.Linear(kwargs['h_dim_l_teacher'], self.vocab_size)
+        self.tau = kwargs['tau']
 
     def forward(self, img, lang, length):
         """
@@ -46,9 +48,6 @@ class RNNDecoder(nn.Module):
         # This is a torch detail - we need to sort the language by decreasing
         # length within our batch so that the RNN can process it more efficiently
         ### (this is for the purpose of making a packed sequence)
-        ### XXX do we really need this to only happen if batch_size > 1?
-        ### (right now it's breaking SGD if we want to do that)
-        #if batch_size > 1:
         sorted_lengths, sorted_idx = torch.sort(length, descending=True)
         lang = lang[sorted_idx]
         img = img[sorted_idx]
@@ -56,9 +55,8 @@ class RNNDecoder(nn.Module):
         img = img.unsqueeze(0)
 
         # embed your sequences
-        # Converts from a tensor of dimension (batch_size, max_length,
-        # num_vocab) to tensor of dimension (batch_size, max_length,
-        # embedding_dim)
+        # Converts from a tensor of dimension (batch_size, max_length)
+        # to tensor of dimension (batch_size, max_length, embedding_dim)
         embed_lang = self.embedding(lang)
 
         # This is a torch detail - we need to create a "PackedSequence" after
@@ -88,7 +86,6 @@ class RNNDecoder(nn.Module):
         # state initialization (if any). If the 2nd argument is left out we
         # default to 0s. (Show and tell does not initialize the hidden state;
         # this code does).
-        ### TODO how does show and tell do it without initializing the hidden state?
         # Note we can just pass the img in directly because its input size in
         # this example (512) exactly matches the RNN hidden size. If this is
         # not the case, you will want to transform the input first with a
@@ -99,7 +96,7 @@ class RNNDecoder(nn.Module):
         # Also, LSTMs have *two* hidden states (a cell and hidden state). So if
         # you use an LSTM, it's good to use *two* layers to initialize your hidden state:
         hidden = (self.init_hidden(img), self.init_cell(img))
-        packed_output, _ = self.LSTM(packed_input, hidden)  # shape = (lang_len, batch, hidden_dim)
+        packed_output, _ = self.LSTM(packed_input, hidden)  # shape = (batch_size, lang_len, hidden_dim)
 
         # We gave the RNN a packed sequence, we need to convert back to the "unpadded" sequence
         ### (second element of return tuple is a list of sequence lengths,
@@ -116,7 +113,7 @@ class RNNDecoder(nn.Module):
         output = output[reversed_idx]
 
         max_length = output.size(1)
-        # Now we're going to "unfold" the hidden states. Previously they were of shape (lang_len, batch, hidden_dim),
+        # Now we're going to "unfold" the hidden states. Previously they were of shape (batch, lang_len, hidden_dim),
         # we're going to modify it so it's a 2d tensor of size (lang_len *
         # batch, hidden_dim). This is so taht we can pass everything into our
         # linear layer and the layer will treat it as one batch, modifying each
@@ -137,7 +134,7 @@ class RNNDecoder(nn.Module):
 
         return outputs
 
-    def sample(self, img, indices, greedy=False):
+    def sample(self, img, indices, train=False, greedy=False):
         """
         Generate from image features.
         img: tensor of dimension (batch_size, prototype_rep_size*2 (200 in this case))
@@ -186,35 +183,111 @@ class RNNDecoder(nn.Module):
 
                 if greedy:
                     predicted = outputs.max(1)[1]
-                    predicted = predicted.unsqueeze(1)
+                    # Shape: (B)
                 else:
                     outputs = F.softmax(outputs, dim=1)
-                    predicted = torch.multinomial(outputs, 1)
+                    predicted = torch.multinomial(outputs, 1).squeeze(1)
                     ### predicted: (batch_size, num_samples (1 in this case))
 
-                predicted_npy = predicted.squeeze(1).cpu().numpy()
-                predicted_lst = predicted_npy.tolist()
+                # predicted_npy = predicted.cpu().numpy()
+                predicted_lst = predicted.tolist()
 
-                for w, so_far in zip(predicted_lst, sampled_ids):
+                for so_far, w in zip(sampled_ids, predicted_lst):
                     if so_far[-1] != indices['eos']:
                         so_far.append(w)
 
-                inputs = predicted.squeeze(1)          # inputs: (L=1,B)
-                inputs = self.embedding(inputs)             # inputs: (L=1,B,E)
+                else: 
+                    inputs = self.embedding(predicted)     # inputs: (B,E)
 
+            # sampled_ids: (batch_size x n_words_in_sentence)
             sampled_lengths = [len(text) for text in sampled_ids]
-            sampled_lengths = np.array(sampled_lengths)
+            sampled_lengths = torch.tensor(sampled_lengths)
 
             max_length = max(sampled_lengths)
-            padded_ids = np.ones((batch_size, max_length)) * indices['pad']
+            padded_ids = torch.ones((batch_size, max_length)) * indices['pad']
 
             for i in range(batch_size):
-                padded_ids[i, :sampled_lengths[i]] = sampled_ids[i]
+                padded_ids[i, :sampled_lengths[i]] = torch.Tensor(sampled_ids[i])
 
-            sampled_lengths = torch.from_numpy(sampled_lengths).long()
-            sampled_ids = torch.from_numpy(padded_ids).long()
+            sampled_lengths = sampled_lengths.long()
+            sampled_ids = padded_ids.long()
 
         return sampled_ids, sampled_lengths
+
+    def sample_gumbel(self, img, indices):
+        """
+        Generate from image features.
+        img: tensor of dimension (batch_size, prototype_rep_size*2 (200 in this case))
+        sos_index, eos_index, and pad_index are the numbers that denote start
+        of sentence, end of sentence, and padding (i.e. empty words just used
+        when a sequence is less than the maximum sequence length in a batch).
+        These are needed becausd we're going to feed the start token into the
+        RNN to ask it to start sampling, and stop once the RNN has sampled an
+        end of sentence marker.
+        """
+        batch_size = img.size(0)
+        img = img.unsqueeze(0)
+
+        # initialize hidden states using image features
+        states = (self.init_hidden(img), self.init_cell(img))
+
+        lang_length = torch.ones(batch_size, dtype=torch.int64).to(img.device)
+        done_sampling = [False for _ in range(batch_size)]
+
+        # first input is SOS token
+        lang = []
+        lang_length = torch.ones(batch_size, dtype=torch.int64).to(img.device)
+        inputs_onehot = torch.zeros(batch_size, self.vocab_size).to(img.device)
+        inputs_onehot[:, indices['sos']] = 1.0
+
+        # compute embeddings
+        # (batch, n_vocab) X (n_vocab, embed_dim) -> (batch, embed_dim)
+        inputs = inputs_onehot @ self.embedding.weight
+
+        # We'll sample until we observe an end of sentence token or we hit
+        # MAX_SEQ_LEN, whichever is faster. After MAX_SEQ_LEN we give up.
+        # (-2 allows for SOS and EOS, if EOS isn't sampled)
+        for i in range(MAX_SEQ_LEN-2):
+            if all(done_sampling):
+                break
+            outputs, states = self.LSTM(inputs.unsqueeze(1), states)  # outputs: (L=1,B,H)
+            outputs = outputs.squeeze(1)                # outputs: (B,H)
+            outputs = self.outputs2vocab(outputs)       # outputs: (B,V)
+
+            predicted_onehot = F.gumbel_softmax(outputs, tau=1, hard=True)
+            # Return shape: (B, V)
+            # Unsqueeze on first dimension to later concat there
+            lang.append(predicted_onehot.unsqueeze(1))
+
+            # Update language lengths and detect whether or not it's done sampling
+            predicted = predicted_onehot.argmax(1) # (B)
+            for i, pred in enumerate(predicted):
+                if not done_sampling[i]:
+                    lang_length[i] += 1
+                if pred == indices['eos']:
+                    done_sampling[i] = True
+
+            # Predicted words are one-hot, so do manual matrix mult
+            # (batch, n_vocab) X (n_vocab, embed_dim) -> (embed_dim, batch)
+            inputs = predicted_onehot @ self.embedding.weight
+
+        # Add EOS tokens to the sentences, in case some of them hadn't finished
+        # (For the ones that had finished, these will get trimmed off later)
+        eos_onehot = torch.zeros(batch_size, 1, self.vocab_size).to(img.device)
+        eos_onehot[:, 0, indices['eos']] = 1.0
+        lang.append(eos_onehot)
+
+        for i, _ in enumerate(predicted):
+            if not done_sampling[i]:
+                lang_length[i] += 1
+            done_sampling[i] = True
+
+        lang_tensor = torch.cat(lang, 1)
+
+        max_lang_len = lang_length.max()
+        lang_tensor = lang_tensor[:, :max_lang_len, :]
+
+        return lang_tensor, lang_length
 
     def build_embeddings(self, vocab_field):
         self.vocab_field = vocab_field

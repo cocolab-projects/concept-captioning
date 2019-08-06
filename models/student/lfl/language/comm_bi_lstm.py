@@ -83,7 +83,7 @@ class BiLSTM(nn.Module):
         )
         self.embed.weight.data.copy_(self.vocab_field.vocab.vectors)
 
-    def forward(self, x, batch_lengths=None, use_concept_vocab=None):
+    def forward(self, x, lang_lengths, onehot=False):
         """
         @param x (torch.Tensor): input text tensor (b, l) where b is batch size,
             l is largest input sequence length (after padding)
@@ -93,18 +93,27 @@ class BiLSTM(nn.Module):
             b is batch size and o_dim is output dimension
         """
 
-        batch_lengths = batch_lengths.view(-1).tolist()
-        X = pack_padded_sequence(self.embed(x), batch_lengths, batch_first=True) # (b, l, w_e)
+        if onehot:
+            # (b, max_seq_len, n_vocab) X (n_vocab, embed_dim) -> (b, max_seq_len, embed_dim)
+            embeddings = x @ self.embed.weight
+        else:
+            embeddings = self.embed(x)
+        sorted_lengths, sorted_idx = torch.sort(lang_lengths, descending=True)
+        embeddings = embeddings[sorted_idx]
+
+        X = pack_padded_sequence(embeddings, sorted_lengths, batch_first=True) # (b, l, w_e)
         
         hiddens, (state, _) = self.lstm(X)
         hiddens, _ = pad_packed_sequence(hiddens, batch_first=True) # (b, l, h_d * 2)
 
+        # TODO check that this should be sorted_lengths, and that we even need it to be a list at all
+        lang_lengths = sorted_lengths.view(-1).tolist()
         if self.with_self_att:
-            language_att, alphas = self.attention_model(hiddens, batch_lengths)
+            language_att, alphas = self.attention_model(hiddens, lang_lengths)
             language_rep = self.output_projection(language_att)
         else:
             state = torch.cat([state[0], state[1]], dim=1)
             language_rep = torch.tanh(self.output_projection(self.dropout(state)))
             alphas = None
-        
+
         return language_rep, alphas

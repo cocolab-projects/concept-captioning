@@ -19,6 +19,7 @@ import time
 
 from models.teacher.teacher import Teacher
 from models.student.lfl.comm_student import Student
+from models.comm.comm_game import CommGame
 from utils.constants import Constants
 from utils.dataloaders.vectorized.load_dataset import load_dataset, construct_y, convert_to_elmo_ids
 from experiments.utils import AverageMeter, AccuracyMeter, save_student_checkpoint, set_seeds
@@ -104,6 +105,8 @@ def parse_args():
                         help='dropout probability (stim)')
     parser.add_argument('--bn-teacher', action='store_true', default=False,
                         help='use batch normalization')
+    parser.add_argument('--tau', type=float, default=1.0,
+                        help='temperature for gumbel softmax')
 
     # Current usage: specify teacher or student datasets, and not comm datasets,
     # if you want to train those models in isolation
@@ -295,6 +298,7 @@ def make_kwargs(args, seed, text_field, model_id, other={}):
         'd_prob_s_teacher': args.dropout_s_teacher,
         'num_layers_s_teacher': args.num_layers_s_teacher,
         'bn_teacher': args.bn_teacher,
+        'tau': args.tau,
 
         'pretrain_teacher': args.pretrain_teacher,
 
@@ -510,6 +514,8 @@ if __name__ == "__main__":
             dest = os.path.join(model_dir, 
                                 'student_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
+        # Initialize teacher and pretrain it on the same datasets
+        # (if pretrain_teacher is set to true)
         teacher = Teacher(**kwargs)
         if args.pretrain_teacher:
             for dset_num, dset in enumerate(args.student_dsets):
@@ -524,15 +530,19 @@ if __name__ == "__main__":
                                     'teacher_{}_samples_{}'.format(dset, dset_num))
                 output_samples_and_prototypes(teacher, loaders[dset], dest)
 
-            # Load in same datasets as for student pretraining
-            # XXX First try using different field objects in the hopes that they use the same stoi
-            # If not, use the same object, and figure out how not to share weights (it should be good enough to just have different torch embedding objs
-            # XXX So maybe we can use the same field object after all :D
-            # They'll both be initialized with glove, but that's okay (probably for the best)
-        # Initialize teacher with same vocab as student (although making sure they don't share weights), and train it on the same pretraining dsets if desired
-        #train_model(teacher, 
-        #output_samples_and_prototypes(teacher, 
-        # Run comm game
-        # comm = CommunicationGame.train_comm_game(teacher, student, **kwargs)
-
-        # TODO get samples (and prototypes :P) for teacher
+        # Train communication game
+        # TODO don't reload dsets we already have
+        # (just change the epoch size)
+        loaders, _ = get_loaders(args.comm_dsets, text_field=text_field) 
+        comm = CommGame(teacher, student, **kwargs)
+        for dset_num, dset in enumerate(args.comm_dsets):
+            losses = train_model(comm, 
+                        loaders[dset], 
+                        args.comm_epochs[dset_num],
+                        **kwargs)
+            dest = os.path.join(model_dir,
+                                'comm_{}_loss_{}.png'.format(dset, dset_num))
+            plot_losses(losses, dest)
+            dest = os.path.join(model_dir,
+                                'comm_{}_samples_{}'.format(dset, dset_num))
+            output_samples_and_prototypes(teacher, loaders[dset], dest)
