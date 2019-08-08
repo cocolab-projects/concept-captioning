@@ -31,42 +31,115 @@ class CommGame(nn.Module):
 
         self.teacher = teacher
         self.student = student
-        
-        # self.cuda = kwargs['cuda']
-        # self.embeddings = kwargs['embeddings']
-        # self.start_index = kwargs['start_index']
-        # self.end_index = kwargs['end_index']
-        # self.pad_index = kwargs['pad_index']
-        # self.text_field = kwargs['vocab_field']
-            
-    # def forward(self, batch):
-    #     """
-    #     Inputs: batch, a batch of concept or reference game inputs
-    #     Outputs: 
-    #     """
+        self.fix_student = kwargs['fix_student']
 
-    def compute_loss(self, batch, n_ref_games=0, fix_student=False):
+        # Labels from last compute_loss(), i.e. last batch of ref games
+        # Stored in order to later compute accuracy
+        # Shape: (batch, n_ref_games)
+        self.labels = None
+        
+    def compute_loss(self, batch, n_ref_games=0):
         """
-        Compute loss.
+        Compute student loss for a batch of either concepts or ref games.
+        If n_ref_games == 0, it's assumed that the batch is of ref games;
+        if n_ref_games >= 0, it may still be ref games, but "new" ref games
+        will be sampled from the original, i.e. distractors may be reused.
         """
         # TODO change this to Jesse's param freezing and/or check if that's necessary
-        if fix_student:
-            self.student.eval()
-        else:
-            self.student.train()
+        if self.fix_student:
+            for param in self.student.parameters():
+                param.requires_grad = False
         # Get gumbel-softmax one-hot samples from teacher
-        # Shape: (batch, max seq length, vocab size)
         stims, labels, _, _ = self.teacher.get_inputs(batch)
         lang, lang_lengths = self.teacher.sample(stims, labels, train=True)
+        # lang shape: (batch, max_lang_len, n_vocab)
+        # lang_lengths shape: (batch)
         # If running on a concept batch (i.e. n_ref_games != 0), 
         # then create a batch of ref games (some number for each concept)
         # ("create" just a single ref game if running on ref data already)
         # For each game, input the teacher sample and ref game to the student,
         # and get its classification loss (run this part with torch.no_grad())
-        cm = torch.no_grad() if fix_student else nullcontext()
-        batch.text = (lang, lang_lengths)
+        # XXX apparently can't use torch.no_grad() for this
         with cm:
-            # loss = self.student.compute_loss_cleaned(stims, labels, lang, lang_lengths, onehot=True)
-            loss = self.student.compute_loss(batch, onehot=True)
+            if n_ref_games > 0:
+                return self.compute_concept_loss(stims, labels, lang, 
+                                                 lang_lengths, n_ref_games)
+            else: 
+                inputs_clean = self.student.get_inputs(stims, batch.labels,
+                                                       lang, lang_lengths,
+                                                       onehot=True)
+                self.labels = inputs_clean[1]
+                return self.student.compute_loss_cleaned(*inputs_clean,
+                                                        onehot=True)
+
+    def compute_concept_loss(self, stims, labels, lang, lang_lengths, 
+                             n_ref_games):
+        '''
+        Computes student loss on a set of reference games generated from
+        a concept.
+        '''
+        bsize, n_feats = stims.shape[0], stims.shape[2]
+        # Take multinomial sample from nonzero elements of labels,
+        # i.e. the positive examples of the concept (or ref game targets)
+        target_indices = labels.multinomial(n_ref_games, replacement=True)
+        # target_indices shape: (batch, n_ref_games)
+        # Index into each tensor of stimuli using the indices above
+        target_indices_expanded = target_indices.unsqueeze(2).expand(-1, -1, n_feats)
+        targets = stims.gather(1, target_indices_expanded)
+        targets = targets.unsqueeze(2)
+        # targets shape: (batch, n_ref_games, 1, n_feats)
+        # TODO with replacement=True this won't exactly reproduce ref games
+        # Could be a useful normalization technique, but should talk about it
+        distr_indices = (1-labels).multinomial(n_ref_games*2, replacement=True)
+        # shape: (batch, n_ref_games*2)
+        distr_indices = distr_indices.unsqueeze(2).expand(-1, -1, n_feats)
+        distr = stims.gather(1, distr_indices)
+        # shape: (batch, n_ref_games*2, n_feats)
+        distr = distr.view(-1, n_ref_games, 2, n_feats)
+        ref_games = torch.cat((targets, distr), dim=2)
+        # shape: (batch, n_ref_games, 3, n_feats)
+        breakpoint()
+
+        # Pivot games into all one dimension for feeding into student
+        ref_games_flat = self.ref_games.view(-1, 3, n_feats)
+        # Target indices are just those generated randomly above
+        # (still have to pivot into one dimension)
+        self.labels = target_indices.long().view(-1)
+        # Repeat lang and lang_lengths for each reference game,
+        # and each stimulus within each reference game
+        lang = torch.cat([lang]*n_ref_games*3, dim=1)
+        lang = lang.view(bsize*n_ref_games*3, lang.shape[1], -1)
+        # shape: (batch*n_ref_games*3, max_lang_len, n_vocab)
+        lang_lengths = torch.cat([lang_lengths.unsqueeze(1)]*n_ref_games*3, dim=1)
+        lang_lengths = lang_lengths.view(-1)
+        # shape: (batch*n_ref_games*3)
+
+        loss, logits = self.student.compute_loss_cleaned(ref_games_flat,
+                                                         self.labels,
+                                                         lang,
+                                                         lang_lengths,
+                                                         onehot=True)
         # Sum across all games to get the total loss and return it
-        return loss
+        # logits: (batch, n_ref_games, 3)
+        # shapely_logits = logits.view(bsize, n_ref_games, 3)
+        # TODO decide what shape of logits to return
+        # (More info, or more consistent with the ref teacher shape?)
+        # Current shape: (bsize*n_ref_games, 3)
+        return loss, logits
+
+    def compute_acc(self, logits):
+        '''
+        Computes the accuracy of the given logits for solving the last
+        set of reference games, stored in self.labels.
+        self.labels: (batch*n_ref_games). Stored from last compute_loss().
+        logits: (batch*n_ref_games, 3).
+        NOTE: as suggested by the sizes, assumes that logits are flattened.
+        '''
+        assert (self.labels.shape[0] == logits.shape[0]), \
+                       "Logit and label shapes don't match!"
+
+        preds = logits.argmax(1) # (batch, n_ref_games)
+        correct = preds == self.labels # (batch*n_ref_games)
+        n_correct = sum(correct).item()
+        n_total = preds.shape[0]
+        return n_correct, n_total

@@ -84,56 +84,18 @@ class Student(nn.Module):
         return logits, alphas
 
     def compute_loss(self, batch, onehot=False):
-        return self.compute_loss_cleaned(*(self.get_inputs(batch, onehot=onehot)), onehot=onehot)
+        return self.compute_loss_cleaned(*(self.get_inputs_batch(batch, onehot=onehot)), onehot=onehot)
 
-    def compute_loss_cleaned(self, stims, labels, lang, lang_lengths, onehot=False):
+    def compute_loss_cleaned(self, stims, labels, lang, lang_lengths,
+                             onehot=False):
         """ Compute reference game loss.
         """
         logits, alphas = self(lang, stims, lang_lengths, onehot=onehot)
 
-        # breakpoint()
         logits = logits.view(-1, 3)
         loss = F.cross_entropy(logits, labels)
         loss += self.compute_att_loss(alphas)
         return loss, logits
-
-    ### HELPER METHODS ###
-    def get_inputs(self, batch, onehot=False):
-        (lang, lang_lengths) = batch.text 
-        # TODO throw an error if they try to use elmo?
-        max_msg_size = lang.shape[1]
-        lang = torch.cat([lang, lang, lang], dim=1) # repeat 3 times for 3 stims
-        if onehot:
-            lang = lang.view(-1, max_msg_size, lang.shape[2])
-        else:
-            lang = lang.view(-1, max_msg_size)
-
-        lang_lengths = lang_lengths.unsqueeze(dim=1)
-        lang_lengths = torch.cat([lang_lengths, lang_lengths, lang_lengths], dim=1)
-        lang_lengths = lang_lengths.view(-1, 1)
-        lang_lengths = lang_lengths.squeeze()
-        stims = self.construct_stim_reps(batch)
-
-        # Convert the one-hot labels into ints to use with cross-entropy
-        _, labels = batch.labels.max(dim=1)
-        if self.cuda:
-            lang = lang.to('cuda')
-            lang_lengths = lang_lengths.to('cuda')
-            stims = stims.to('cuda')
-            labels = labels.to('cuda')
-
-        return stims, labels, lang, lang_lengths
-
-    def construct_stim_reps(self, batch):
-        """ Construct stimulus representations for batch of dimension
-            (3 x batch dimension, stim representation).
-            target, distr1, distr2
-        """
-        target = batch.__dict__[str(0)]
-        distr1 = batch.__dict__[str(1)]
-        distr2 = batch.__dict__[str(2)]
-        stims = torch.cat([target, distr1, distr2], dim=1).float()
-        return stims.view(-1, 78)
 
     def compute_att_loss(self, alphas):
         """ Compute loss term associated with self attention. 
@@ -149,3 +111,69 @@ class Student(nn.Module):
             return extra_loss
         else:
             return 0.0
+
+    def compute_acc(self, logits):
+        '''
+        Computes accuracy of (for now, only) ref game predictions, stored in
+        logits. Compares to self.labels, collected from last batch processed.
+        logits: (batch, 3)
+        self.labels: (batch)
+        '''
+        assert (logits.shape[0] == self.labels.shape[0]), \
+                "Logits and labels not of the same shape!"
+        preds = logits.argmax(1)
+        correct = preds == self.labels
+        n_correct = sum(correct).item()
+        n_total = logits.shape[0]
+        return n_correct, n_total
+
+    ### HELPER METHODS ###
+    def get_inputs_batch(self, batch, onehot=False):
+        stims = self.construct_stim_reps(batch)
+        return self.get_inputs(stims, batch.labels, batch.text[0], 
+                          batch.text[1], onehot=onehot)
+
+    def get_inputs(self, stims, labels, lang, lang_lengths, onehot=False):
+        # TODO throw an error if they try to use elmo?
+        max_msg_size = lang.shape[1]
+        lang = torch.cat([lang]*3, dim=1) # repeat 3 times for 3 stims
+        if onehot:
+            lang = lang.view(-1, max_msg_size, lang.shape[2])
+        else:
+            lang = lang.view(-1, max_msg_size)
+
+        lang_lengths = lang_lengths.unsqueeze(dim=1)
+        lang_lengths = torch.cat([lang_lengths]*3, dim=1)
+        lang_lengths = lang_lengths.view(-1, 1)
+        lang_lengths = lang_lengths.squeeze()
+
+        # Flatten stims (one per row)
+        if len(stims.shape) > 2:
+            n_feats = stims.shape[2]
+            stims = stims.view(-1, n_feats)
+
+        # Convert the one-hot labels into ints to use with cross-entropy
+        labels = labels.argmax(1)
+        if self.cuda:
+            lang = lang.to('cuda')
+            lang_lengths = lang_lengths.to('cuda')
+            stims = stims.to('cuda')
+            labels = labels.to('cuda')
+
+        # Store labels of this batch to later compute accuracy
+        self.labels = labels
+
+        return stims, labels, lang, lang_lengths
+
+    def construct_stim_reps(self, batch):
+        """ 
+        Cat stims from different columns into the same tensor
+        returned with shape (batch, n_feats*3)
+        Will be flattened later in the get_inputs call
+        """
+        target = batch.__dict__[str(0)]
+        distr1 = batch.__dict__[str(1)]
+        distr2 = batch.__dict__[str(2)]
+        stims = torch.cat([target, distr1, distr2], dim=1).float()
+        n_feats = target.shape[1]
+        return stims.view(-1, n_feats) 

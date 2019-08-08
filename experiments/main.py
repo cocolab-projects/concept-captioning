@@ -173,8 +173,10 @@ def parse_args():
                         help='enables or disables lemmatization for tokenization')
     parser.add_argument('--seed', type=int, default=None,
                         help='random seed to use')
-    parser.add_argument('--use-best', action='store_true', 
-                        help='stop training on each dset early')
+    parser.add_argument('--use-best', type=bool, default=True, 
+                        help='stop training on each dset early (default True)')
+    parser.add_argument('--fix-student', action='store_true',
+                        help='fix the student model in the communication game')
 
     # Argument post-processing
     args = parser.parse_args()
@@ -321,6 +323,8 @@ def make_kwargs(args, seed, model_id, other={}):
         'comm_epochs': args.comm_epochs,
         'lemmatized': args.lemmatized,
         'datapaths': args.datapaths,
+        'lr': args.lr,
+        'fix_student': args.fix_student,
 
         **other
     }
@@ -357,7 +361,7 @@ def get_samples_and_prototypes(model, loader):
     return df
         
 
-def train(model, epoch, train_loader, optimizer):
+def train(model, epoch, train_loader, optimizer, show_acc=False):
     """ Train model for a single epoch.
     """
     ### Model is declared in global space 
@@ -365,12 +369,12 @@ def train(model, epoch, train_loader, optimizer):
     # Data loading & progress visualization
     ### loss_meter stores the loss of the current batch and the average loss
     loss_meter = AverageMeter()
-    #acc_meter = AccuracyMeter()
     ### tqdm is a progress bar for iterations of a loop through an iterator
     ### generally you wrap the iterable in it, like tqdm(range), to automatically keep track of #iterations
     ### but you can also use pbar.update() to tell it to iterate manually
     train_loader.init_epoch()
     pbar = tqdm(total=len(train_loader))
+    n_correct, n_total = 0, 0
     
     # Sets model in training mode
     model.train()
@@ -382,7 +386,10 @@ def train(model, epoch, train_loader, optimizer):
         loss.backward()
         optimizer.step()
         # Update progress
-        #acc_meter.update(logits, batch)
+        if show_acc:
+            batch_correct, batch_total = model.compute_acc(logits)
+            n_correct += batch_correct
+            n_total += batch_total
         loss_meter.update(loss.data.item(), batch.batch_size)
         ### Every so often, print progress information (example #, average loss over this epoch, etc.)
         ### also resets pbar onto a new line
@@ -393,42 +400,56 @@ def train(model, epoch, train_loader, optimizer):
         pbar.update()
     pbar.close()
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, loss_meter.avg))
-    #acc_meter.print()
+    if show_acc:
+        acc = n_correct/n_total
+        print("Accuracy: {}%".format(acc*100))
     return loss_meter.avg
 
 
-def val(model, val_loader, use_acc=False):
+def val(model, val_loader, show_acc=False):
     """ Run model through validation dataset.
     """
     loss_meter = AverageMeter()
-    if use_acc:
-        acc_meter = AccuracyMeter()
     pbar = tqdm(total=len(val_loader))
     val_loader.init_epoch()
     model.eval()
+    n_correct, n_total = 0, 0
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
             loss, logits = model.compute_loss(batch)
             #loss += compute_self_att_loss(alphas)
-            if use_acc:
-                acc_meter.update(logits, batch)
+            if show_acc:
+                new_correct, new_total = model.compute_acc(logits)
+                n_correct += new_correct
+                n_total += new_total
             loss_meter.update(loss.data.item(), batch.batch_size)
             pbar.update()
     pbar.close()
     print('====> Validation set loss: {:.4f}'.format(loss_meter.avg))
-    if use_acc:
-        acc_meter.print()
-    return loss_meter.avg#, acc_meter
+    if show_acc:
+        acc = n_correct/n_total
+        print("Accuracy: {}%".format(acc*100))
+    return loss_meter.avg
 
-def train_model(model, loaders, n_epochs, show_acc=False, **kwargs):
+def train_model(model, loaders, n_epochs, show_acc=False,
+                fix_comm_student=False, **kwargs):
+    '''
+    Trains a model for n_epochs on loaders['train'], evaluating on 
+    loaders['val'].
+    Note that show_acc expects that the model has compute_acc(logits) defined,
+    where it internally stores and compares to the labels from the last batch.
+    fix_comm_student is only to be used with a communication game model, 
+    in particular when the student model should be fixed.
+    '''
     if kwargs['cuda']:
         model = model.to('cuda')
-    ### Adam is an optimization algorithm, like SGD, except that it changes its learning rate dynamically
-    ### based on recent gradients (low gradients --> high LR, vice versa)
-    ### It's similar in this way to root mean square propagation (RMSProp), just a little more sophisticated
-    ### People apparently just use it because it works well
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    if fix_comm_student:
+        optimizer = optim.Adam(model.teacher.parameters(),lr=kwargs['lr'],
+                               weight_decay=1e-4)
+    else:
+        optimizer = optim.Adam(model.parameters(), lr=kwargs['lr'],
+                               weight_decay=1e-4)
 
     best_acc = 0.0
     best_epoch = -1
@@ -438,9 +459,10 @@ def train_model(model, loaders, n_epochs, show_acc=False, **kwargs):
     best_loss = 2^63 # arbitrary really large value
     for epoch in range(1, n_epochs + 1):
         train_loader = loaders['train']
-        train_loss = train(model, epoch, train_loader, optimizer)
+        train_loss = train(model, epoch, train_loader, optimizer, 
+                           show_acc=show_acc)
         val_loader = loaders['val']
-        val_loss = val(model, val_loader)
+        val_loss = val(model, val_loader, show_acc=show_acc)
         losses[epoch - 1, 0] = train_loss
         losses[epoch - 1, 1] = val_loss
 
@@ -478,10 +500,9 @@ if __name__ == "__main__":
             loaders, text_field = get_loaders(args.student_dsets)
             student = Student(text_field, **kwargs)
             for dset_num, dset in enumerate(args.student_dsets):
-                losses, best = train_model(student,
-                                           loaders[dset],
+                losses, best = train_model(student, loaders[dset],
                                            args.indiv_epochs[dset_num],
-                                           **kwargs)
+                                           **kwargs, show_acc=True)
                 dest = os.path.join(model_dir,
                                     'teacher_{}_loss{}.png'.format(dset, dset_num))
                 plot_losses(losses, dest)
@@ -489,8 +510,7 @@ if __name__ == "__main__":
             loaders, text_field = get_loaders(args.teacher_dsets)
             teacher = Teacher(text_field, **kwargs)
             for dset_num, dset in enumerate(args.teacher_dsets):
-                losses, best = train_model(teacher, 
-                                           loaders[dset], 
+                losses, best = train_model(teacher, loaders[dset], 
                                            args.indiv_epochs[dset_num], 
                                            **kwargs)
                 if args.use_best:
@@ -511,10 +531,9 @@ if __name__ == "__main__":
         loaders, text_field = get_loaders(vocab_dsets)
         student = Student(text_field, **kwargs)
         for dset_num, dset in enumerate(args.student_dsets):
-            losses, best = train_model(student, 
-                                       loaders[dset],
-                                       args.indiv_epochs[dset_num],
-                                       **kwargs)
+            losses, best = train_model(student, loaders[dset],
+                                       args.indiv_epochs[dset_num], **kwargs,
+                                       show_acc=True)
             if args.use_best:
                 student = best
             # XXX this is kinda ugly (more like ugly as all get out)
@@ -526,8 +545,7 @@ if __name__ == "__main__":
         teacher = Teacher(text_field, **kwargs)
         if args.pretrain_teacher:
             for dset_num, dset in enumerate(args.student_dsets):
-                losses, best = train_model(teacher, 
-                                           loaders[dset], 
+                losses, best = train_model(teacher, loaders[dset], 
                                            args.indiv_epochs[dset_num], 
                                            **kwargs)
                 if args.use_best:
@@ -544,10 +562,10 @@ if __name__ == "__main__":
         loaders, _ = get_loaders(args.comm_dsets, text_field=text_field) 
         comm = CommGame(teacher, student, **kwargs)
         for dset_num, dset in enumerate(args.comm_dsets):
-            losses, best = train_model(comm, 
-                        loaders[dset], 
-                        args.comm_epochs[dset_num],
-                        **kwargs)
+            losses, best = train_model(comm, loaders[dset], 
+                                       args.comm_epochs[dset_num], **kwargs,
+                                       show_acc=True, 
+                                       fix_comm_student=args.fix_student)
             dest = os.path.join(model_dir,
                                 'comm_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)

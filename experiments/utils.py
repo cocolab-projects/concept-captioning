@@ -122,6 +122,42 @@ class AccuracyMeter(object):
             2. Teacher Response
             3. Student Response
     """
+    def __init__(self, model):
+        self.model = model
+        self.reset()
+    
+    def reset(self):
+        self.acc_counts = [0, 0]
+
+    
+    def update(self, y_hat, batch, refGame=False, cuda=False, vision=False):
+        predictions = torch.argmax(y_hat, dim=1)
+        for obj in self.acc_counts.keys():
+            if vision:
+                if refGame:
+                    raise Exception ("Not implemented yet.")
+                else:
+                    acc_count_y = batch[obj] # Labels
+            else:
+                if refGame:
+                    acc_count_y = construct_y_reference(batch)
+                    if cuda:
+                        acc_count_y = acc_count_y.to('cuda')                
+                else:
+                    acc_count_y = construct_y_concept(batch, obj)
+            num_incorrect = (acc_count_y - predictions).nonzero()
+            if not isinstance(num_incorrect, int):
+                num_incorrect = num_incorrect.squeeze(dim=0).shape[0]
+            num_correct = predictions.shape[0] - num_incorrect
+            self.acc_counts[obj]['num_correct'] += num_correct
+            self.acc_counts[obj]['num_incorrect'] += num_incorrect
+
+class AccuracyMeterOld(object):
+    """ Computes accuracy against 3 "truth" values:
+            1. Ground Truth
+            2. Teacher Response
+            3. Student Response
+    """
     def __init__(self):
         self.reset()
     
