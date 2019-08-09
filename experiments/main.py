@@ -530,6 +530,7 @@ if __name__ == "__main__":
             vocab_dsets = VALID_STUDENT_DATASETS
         loaders, text_field = get_loaders(vocab_dsets)
         student = Student(text_field, **kwargs)
+        print("====PRETRAINING STUDENT====")
         for dset_num, dset in enumerate(args.student_dsets):
             losses, best = train_model(student, loaders[dset],
                                        args.indiv_epochs[dset_num], **kwargs,
@@ -544,6 +545,7 @@ if __name__ == "__main__":
         # (if pretrain_teacher is set to true)
         teacher = Teacher(text_field, **kwargs)
         if args.pretrain_teacher:
+            print("====PRETRAINING TEACHER====")
             for dset_num, dset in enumerate(args.student_dsets):
                 losses, best = train_model(teacher, loaders[dset], 
                                            args.indiv_epochs[dset_num], 
@@ -561,6 +563,7 @@ if __name__ == "__main__":
         # TODO don't reload dsets we already have (just change the epoch size)
         loaders, _ = get_loaders(args.comm_dsets, text_field=text_field) 
         comm = CommGame(teacher, student, **kwargs)
+        print("====TRAINING COMMUNICATION GAME====")
         for dset_num, dset in enumerate(args.comm_dsets):
             losses, best = train_model(comm, loaders[dset], 
                                        args.comm_epochs[dset_num], **kwargs,
