@@ -456,7 +456,7 @@ def train_model(model, loaders, n_epochs, show_acc=False,
     ### Losses format: epoch1_loss_train, ..., epochn_loss_train
     ###                epoch1_loss_val,   ..., epochn_loss_val
     losses = np.zeros((n_epochs, 2))
-    best_loss = 2^63 # arbitrary really large value
+    best_loss = 2**63 # arbitrary really large value
     for epoch in range(1, n_epochs + 1):
         train_loader = loaders['train']
         train_loss = train(model, epoch, train_loader, optimizer, 
