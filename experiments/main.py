@@ -402,7 +402,7 @@ def train(model, epoch, train_loader, optimizer, show_acc=False):
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, loss_meter.avg))
     if show_acc:
         acc = n_correct/n_total
-        print("Accuracy: {}%".format(acc*100))
+        print("Accuracy: {:.2f}%".format(acc*100))
     return loss_meter.avg
 
 
@@ -429,7 +429,7 @@ def val(model, val_loader, show_acc=False):
     print('====> Validation set loss: {:.4f}'.format(loss_meter.avg))
     if show_acc:
         acc = n_correct/n_total
-        print("Accuracy: {}%".format(acc*100))
+        print("Accuracy: {:.2f}%".format(acc*100))
     return loss_meter.avg
 
 def train_model(model, loaders, n_epochs, show_acc=False,
