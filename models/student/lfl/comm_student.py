@@ -31,7 +31,7 @@ class Student(nn.Module):
         """
         super(Student, self).__init__()
 
-        self.languageModel = BiLSTM(
+        self.language_model = BiLSTM(
             h_dim=kwargs['h_dim_l_student'],
             o_dim=kwargs['o_dim_l_student'],
             d_prob=kwargs['d_prob_l_student'],      
@@ -43,7 +43,7 @@ class Student(nn.Module):
         )
         
         if kwargs['stim_model_type'] == 'featureMLP':
-            self.stimModel = MLP(
+            self.stim_model = MLP(
                 i_dim=kwargs['i_dim_s_student'],
                 h_dim=kwargs['h_dim_s_student'],
                 o_dim=kwargs['o_dim_s_student'],
@@ -52,13 +52,19 @@ class Student(nn.Module):
                 num_layers=kwargs['num_layers_s_student'],
             )
         elif kwargs['stim_model_type'] == 'resnet':
-            self.stimModel = models.resnet18(pretrained=kwargs['pretrained'])
-            self.stimModel.fc = nn.Linear(512, kwargs['o_dim_stim'])
+            self.stim_model = models.resnet18(pretrained=kwargs['pretrained'])
+            self.stim_model.fc = nn.Linear(512, kwargs['o_dim_stim'])
         else:
             raise Exception('Invalid Stimulus Model')
             
+        
+        self.ablate_lang = kwargs['ablate_student_lang']
+        if self.ablate_lang:
+            comp_i_dim = kwargs['o_dim_s_student']
+        else:
+            comp_i_dim = kwargs['o_dim_l_student'] + kwargs['o_dim_s_student']
         self.comparator = MLP(
-            i_dim=kwargs['o_dim_l_student'] + kwargs['o_dim_s_student'],
+            i_dim=comp_i_dim,
             h_dim=kwargs['h_dim_student'],
             o_dim=1,
             d_prob=kwargs['d_prob_student'],
@@ -77,10 +83,14 @@ class Student(nn.Module):
             lang_lengths: true lengths of text in lang
             use_concept: T/F use concept model
         """
-        languageRep, alphas = self.languageModel(lang, lang_lengths, onehot=onehot)
-        stimRep = self.stimModel(stims)
-        joinedRep = torch.cat([languageRep, stimRep], dim=1)
-        logits = self.comparator(joinedRep)
+        language_rep, alphas = self.language_model(lang, lang_lengths, onehot=onehot)
+        stim_rep = self.stim_model(stims)
+        joined_rep = torch.cat([language_rep, stim_rep], dim=1)
+        if self.ablate_lang:
+            logits = self.comparator(stim_rep)
+            print(yup)
+        else:
+            logits = self.comparator(joined_rep)
         return logits, alphas
 
     def compute_loss(self, batch, onehot=False):

@@ -85,6 +85,10 @@ def parse_args():
     parser.add_argument('--bn-student', action='store_true', default=False,
                         help='use batch normalization')
 
+    parser.add_argument('--ablate-student-lang', action='store_true',
+                        default=False, help='only use stim reps for student \
+                        network; to be used for ablation testing')
+
     parser.add_argument('--hidden-dim-l-teacher', type=int, default=100,
                         help='hidden dimensions (language)')
     parser.add_argument('--output-dim-l-teacher', type=int, default=100,
@@ -292,6 +296,8 @@ def make_kwargs(args, seed, model_id, other={}):
 
         'bn_student': args.bn_student,
 
+        'ablate_student_lang': args.ablate_student_lang,
+
         'h_dim_l_teacher': args.hidden_dim_l_teacher,
         'o_dim_l_teacher': args.output_dim_l_teacher,
         'd_prob_l_teacher': args.dropout_l_teacher,
@@ -430,7 +436,10 @@ def val(model, val_loader, show_acc=False):
     if show_acc:
         acc = n_correct/n_total
         print("Accuracy: {}%".format(acc*100))
-    return loss_meter.avg
+    if show_acc:
+        return loss_meter.avg, acc
+    else:
+        return loss_meter.avg
 
 def train_model(model, loaders, n_epochs, show_acc=False,
                 fix_comm_student=False, **kwargs):
@@ -459,8 +468,12 @@ def train_model(model, loaders, n_epochs, show_acc=False,
     best_loss = 2**63 # arbitrary really large value
     for epoch in range(1, n_epochs + 1):
         train_loader = loaders['train']
-        train_loss = train(model, epoch, train_loader, optimizer, 
-                           show_acc=show_acc)
+        if show_acc:
+            train_loss, acc = train(model, epoch, train_loader, optimizer, 
+                                    show_acc=show_acc)
+        else:
+            train_loss = train(model, epoch, train_loader, optimizer, 
+                               show_acc=show_acc)
         val_loader = loaders['val']
         val_loss = val(model, val_loader, show_acc=show_acc)
         losses[epoch - 1, 0] = train_loss
