@@ -546,8 +546,8 @@ if __name__ == "__main__":
         print("====PRETRAINING STUDENT====")
         for dset_num, dset in enumerate(args.student_dsets):
             losses, best = train_model(student, loaders[dset],
-                                       args.indiv_epochs[dset_num], **kwargs,
-                                       show_acc=True)
+                                       args.indiv_epochs[dset_num], 
+                                       show_acc=True, **kwargs)
             if args.use_best:
                 student = best
             # XXX this is kinda ugly (more like ugly as all get out)
@@ -579,9 +579,10 @@ if __name__ == "__main__":
         print("====TRAINING COMMUNICATION GAME====")
         for dset_num, dset in enumerate(args.comm_dsets):
             losses, best = train_model(comm, loaders[dset], 
-                                       args.comm_epochs[dset_num], **kwargs,
+                                       args.comm_epochs[dset_num], 
                                        show_acc=True, 
-                                       fix_comm_student=args.fix_student)
+                                       fix_comm_student=args.fix_student, 
+                                       **kwargs)
             dest = os.path.join(model_dir,
                                 'comm_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
