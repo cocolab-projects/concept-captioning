@@ -88,7 +88,6 @@ class Student(nn.Module):
         joined_rep = torch.cat([language_rep, stim_rep], dim=1)
         if self.ablate_lang:
             logits = self.comparator(stim_rep)
-            print(yup)
         else:
             logits = self.comparator(joined_rep)
         return logits, alphas

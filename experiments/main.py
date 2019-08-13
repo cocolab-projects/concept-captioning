@@ -409,6 +409,7 @@ def train(model, epoch, train_loader, optimizer, show_acc=False):
     if show_acc:
         acc = n_correct/n_total
         print("Accuracy: {}%".format(acc*100))
+        return loss_meter.avg, acc
     return loss_meter.avg
 
 
@@ -436,10 +437,8 @@ def val(model, val_loader, show_acc=False):
     if show_acc:
         acc = n_correct/n_total
         print("Accuracy: {}%".format(acc*100))
-    if show_acc:
         return loss_meter.avg, acc
-    else:
-        return loss_meter.avg
+    return loss_meter.avg
 
 def train_model(model, loaders, n_epochs, show_acc=False,
                 fix_comm_student=False, **kwargs):
@@ -465,24 +464,33 @@ def train_model(model, loaders, n_epochs, show_acc=False,
     ### Losses format: epoch1_loss_train, ..., epochn_loss_train
     ###                epoch1_loss_val,   ..., epochn_loss_val
     losses = np.zeros((n_epochs, 2))
+    accs = np.zeros((n_epochs, 2))
     best_loss = 2**63 # arbitrary really large value
     for epoch in range(1, n_epochs + 1):
         train_loader = loaders['train']
         if show_acc:
-            train_loss, acc = train(model, epoch, train_loader, optimizer, 
-                                    show_acc=show_acc)
+            loss_train, acc_train = train(model, epoch, train_loader,
+                                          optimizer, show_acc=show_acc)
         else:
-            train_loss = train(model, epoch, train_loader, optimizer, 
+            loss_train = train(model, epoch, train_loader, optimizer, 
                                show_acc=show_acc)
         val_loader = loaders['val']
-        val_loss = val(model, val_loader, show_acc=show_acc)
-        losses[epoch - 1, 0] = train_loss
-        losses[epoch - 1, 1] = val_loss
+        if show_acc:
+            loss_val, acc_val = val(model, val_loader, show_acc=show_acc)
+        else:
+            loss_val = val(model, val_loader, show_acc=show_acc)
 
-        if val_loss < best_loss:
-            best_loss = val_loss
+        losses[epoch - 1, 0] = loss_train
+        losses[epoch - 1, 1] = loss_val
+        accs[epoch-1, 0] = acc_train
+        accs[epoch-1, 1] = acc_val
+
+        if loss_val < best_loss:
+            best_loss = loss_val
             best = copy.deepcopy(model)
-
+    
+    if show_acc:
+        return losses, accs, best
     return losses, best
 
 def plot_losses(losses, dest):
@@ -513,12 +521,16 @@ if __name__ == "__main__":
             loaders, text_field = get_loaders(args.student_dsets)
             student = Student(text_field, **kwargs)
             for dset_num, dset in enumerate(args.student_dsets):
-                losses, best = train_model(student, loaders[dset],
+                losses, accs, best = train_model(student, loaders[dset],
                                            args.indiv_epochs[dset_num],
                                            **kwargs, show_acc=True)
                 dest = os.path.join(model_dir,
-                                    'teacher_{}_loss{}.png'.format(dset, dset_num))
+                                    'student_{}_loss_{}.png'.format(dset, dset_num))
                 plot_losses(losses, dest)
+                dest = os.path.join(model_dir,
+                                    'student_{}_acc_{}.png'.format(dset, dset_num))
+                plot_losses(accs, dest)
+                
         else:
             loaders, text_field = get_loaders(args.teacher_dsets)
             teacher = Teacher(text_field, **kwargs)
@@ -545,15 +557,18 @@ if __name__ == "__main__":
         student = Student(text_field, **kwargs)
         print("====PRETRAINING STUDENT====")
         for dset_num, dset in enumerate(args.student_dsets):
-            losses, best = train_model(student, loaders[dset],
-                                       args.indiv_epochs[dset_num], 
-                                       show_acc=True, **kwargs)
+            losses, accs, best = train_model(student, loaders[dset],
+                                             args.indiv_epochs[dset_num], 
+                                             show_acc=True, **kwargs)
             if args.use_best:
                 student = best
             # XXX this is kinda ugly (more like ugly as all get out)
             dest = os.path.join(model_dir, 
                                 'student_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
+            dest = os.path.join(model_dir,
+                                'student_{}_acc_{}.png'.format(dset, dset_num))
+            plot_losses(accs, dest)
         # Initialize teacher and pretrain it on the same datasets
         # (if pretrain_teacher is set to true)
         teacher = Teacher(text_field, **kwargs)
@@ -578,7 +593,7 @@ if __name__ == "__main__":
         comm = CommGame(teacher, student, **kwargs)
         print("====TRAINING COMMUNICATION GAME====")
         for dset_num, dset in enumerate(args.comm_dsets):
-            losses, best = train_model(comm, loaders[dset], 
+            losses, accs, best = train_model(comm, loaders[dset], 
                                        args.comm_epochs[dset_num], 
                                        show_acc=True, 
                                        fix_comm_student=args.fix_student, 
@@ -586,6 +601,9 @@ if __name__ == "__main__":
             dest = os.path.join(model_dir,
                                 'comm_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
+            dest = os.path.join(model_dir,
+                                'comm_{}_acc_{}.png'.format(dset, dset_num))
+            plot_losses(accs, dest)
             dest = os.path.join(model_dir,
                                 'comm_{}_samples_{}'.format(dset, dset_num))
             output_samples_and_prototypes(teacher, loaders[dset], dest)
