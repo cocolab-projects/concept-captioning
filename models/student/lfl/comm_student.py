@@ -181,7 +181,8 @@ class Student(nn.Module):
             stims = stims.view(-1, n_feats)
 
         # Generate stims for supplementary ref games
-        stims = create_supp_stims(stims)
+        if self.n_supp:
+            stims = create_supp_stims(stims)
 
         # Convert the one-hot labels into ints to use with cross-entropy
         labels = labels.argmax(1)
@@ -218,31 +219,29 @@ class Student(nn.Module):
         the form of an n_stims*(1+self.n_supp) length tensor of stims
         stims: (batch*3, n_feats)
         '''
-        # TODO figure out how to keep original ref game
-        # SOLVED just concat along the second dimension with stims later
-        # Get tensor of only targets
+        assert self.n_supp, "Should create a nonzero number of supp games!"
         n_feats = stims.shape[1]
         breakpoint()
         # Get only targets by indexing into ref game stims by their labels
         targets = stims.view(-1, 3, n_feats)
         targets = labels.argmax(1).gather(targets, dim=1)
-        # Get tensor of target types
-        # Find index of last present feature, and determine 
-        # which animal range it's in
-        targets = targets.argmax(1)
-        targets = self.feat_to_creat.index_select(targets)
-        targets = to_onehot(targets, n=5) # (batch, 5)
         # Repeat once for each game
-        targets = targets.unsqueeze(1).expand(-1, 1+self.n_supp, 5)
-        targets = targets.view(-1, 5) # (batch*(1+n_supp), 5)
+        targets = targets.unsqueeze(1).expand(-1, self.n_supp, n_feats)
+        targets = targets.view(-1, n_feats) # (batch*(n_supp), 5)
+        # Get tensor of target types
+        # Find index of last present feature, and determine which
+        # animal range it's in
+        target_types = targets.argmax(1)
+        target_types = self.feat_to_creat.index_select(target_types)
+        target_types = to_onehot(target_types, n=5) # (batch, 5)
         # Get valid new animal types as all except the previous type
-        new_distrs = torch.ones(targets) - targets
+        new_distrs = torch.ones(target_types) - target_types
         # Duplicate once to get two distractors
         new_distrs = new_distrs.unsqueeze(1).expand(-1, 2, -1)
-        # new_distrs shape: (batch*(1+n_supp), 2, 5)
+        # new_distrs shape: (batch*(n_supp), 2, 5)
         new_distrs = new_distrs.view(-1, 5)
         # Sample from new animal types
-        new_distrs = new_targets.multinomial(1).squeeze() # (batch*(1+n_supp))
+        new_distrs = new_targets.multinomial(1).squeeze() # (batch*(n_supp))
         # new_targets is now the index of the animal types to be used
         
         # TODO convert this to torch magic
@@ -255,8 +254,18 @@ class Student(nn.Module):
                 n_poss = len(self.concept_targets[creat_type])
                 distr_idx = np.randrange(n_poss)
                 new_distrs[distr_type_idx] = self.concept_targets[distr_idx]
-
-
-
-
-        #  
+        # new_distrs is now actual stimulus feature representations
+        # shape: (batch*2*(n_supp), n_feats)
+        # Now undo the flattening of the two distractors
+        new_distrs = new_distrs.view(-1, 2, n_feats) # (batch*(n_supp), ...)
+        # Cat the original targets with the new distractors to produce the
+        # supp games
+        targets.unsqueeze_(1)
+        new_games = torch.cat(targets, new_distrs, dim=1) 
+        # shape: (batch*n_supp, 3, n_feats)
+        # Now combine with the original games
+        new_games = new_games.view(-1, 3*self.n_supp, n_feats)
+        stims = stims.view(-1, 3, n_feats)
+        stims = torch.cat(stims, new_games, dim=1)
+        stims = stims.view(-1, n_feats) # (batch*3*(1+n_supp), n_feats)
+        return stims
