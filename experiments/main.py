@@ -140,6 +140,12 @@ def parse_args():
                         help='paths to data files; input as python dict notation'
                         ' for each dataset specified in --data'
                         ' NOTE: only use single quote marks in the dict')
+    parser.add_argument('--ref-targets', type=str, default=REF_TARGETS,
+                        help='path to list of train ref game targets')
+
+    parser.add_argument('--concept-pos-stims', type=str, 
+                        default=CONCEPT_TARGETS,
+                        help='path to list of positive concept game stims')
     parser.add_argument('--indiv-bsizes', type=ast.literal_eval, 
                         default=DEFAULT_B_SIZES, metavar='N',
                         help='batch size for individual (pre)training'
@@ -181,6 +187,10 @@ def parse_args():
                         help='stop training on each dset early (default True)')
     parser.add_argument('--fix-student', action='store_true',
                         help='fix the student model in the communication game')
+    parser.add_argument('n-supp-ref-games', type=int, default=10,
+                        help='number of supplementary ref games to sample \
+                        per training game (where new distractors are taken \
+                        from targets of games of different species)')
 
     # Argument post-processing
     args = parser.parse_args()
@@ -329,8 +339,11 @@ def make_kwargs(args, seed, model_id, other={}):
         'comm_epochs': args.comm_epochs,
         'lemmatized': args.lemmatized,
         'datapaths': args.datapaths,
+        'ref_targets': args.ref_targets,
+        'concept_targets': args.concept_pos_stims,
         'lr': args.lr,
         'fix_student': args.fix_student,
+        'n_supp_ref_games': args.n_supp_ref_games,
 
         **other
     }
