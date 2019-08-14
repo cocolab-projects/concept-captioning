@@ -182,7 +182,7 @@ class Student(nn.Module):
 
         # Generate stims for supplementary ref games
         if self.n_supp:
-            stims = create_supp_stims(stims)
+            stims = add_sup_games(stims)
 
         # Convert the one-hot labels into ints to use with cross-entropy
         labels = labels.argmax(1)
