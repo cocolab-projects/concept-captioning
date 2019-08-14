@@ -213,10 +213,15 @@ class Student(nn.Module):
         n_feats = target.shape[1]
         return stims.view(-1, n_feats) 
 
-    def create_supp_stims(self, stims, labels, ref=True):
+    def add_supp_games(self, stims, labels, ref=True):
         '''
-        Creates self.n_supp additional games for each stimulus, returned in
-        the form of an n_stims*(1+self.n_supp) length tensor of stims
+        Creates self.n_supp additional games for each reference game in stims,
+        where each supplementary game uses the same target as the original,
+        but uses distractors sampled from the *targets* of *other species*. 
+        (This is to avoid the student learning that some stims appear as
+        targets more than distractors.)
+        These games are then catted onto the original games, and returned in 
+        the form of an n_stims*(1+self.n_supp) length tensor of stims.
         stims: (batch*3, n_feats)
         '''
         assert self.n_supp, "Should create a nonzero number of supp games!"
