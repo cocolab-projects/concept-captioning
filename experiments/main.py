@@ -42,6 +42,8 @@ DEFAULT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_con
                          concept='./data/concept/{}/vectorized/concept_dataset.tsv',
                          ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
 DEFAULT_B_SIZES = dict(unique_concept=12, concept=32, ref=32)
+REF_TARGETS = './data/reference/pilot_coll1/train/vectorized/targets.pkl'
+CONCEPT_TARGETS = './data/concept/train/vectorized/targets.pkl'
 
 
 def parse_args():
@@ -84,6 +86,10 @@ def parse_args():
 
     parser.add_argument('--bn-student', action='store_true', default=False,
                         help='use batch normalization')
+
+    parser.add_argument('--ablate-student-lang', action='store_true',
+                        default=False, help='only use stim reps for student \
+                        network; to be used for ablation testing')
 
     parser.add_argument('--hidden-dim-l-teacher', type=int, default=100,
                         help='hidden dimensions (language)')
@@ -136,6 +142,12 @@ def parse_args():
                         help='paths to data files; input as python dict notation'
                         ' for each dataset specified in --data'
                         ' NOTE: only use single quote marks in the dict')
+    parser.add_argument('--ref-targets', type=str, default=REF_TARGETS,
+                        help='path to list of train ref game targets')
+
+    parser.add_argument('--concept-targets', type=str, 
+                        default=CONCEPT_TARGETS,
+                        help='path to list of positive concept game stims')
     parser.add_argument('--indiv-bsizes', type=ast.literal_eval, 
                         default=DEFAULT_B_SIZES, metavar='N',
                         help='batch size for individual (pre)training'
@@ -177,6 +189,12 @@ def parse_args():
                         help='stop training on each dset early (default True)')
     parser.add_argument('--fix-student', action='store_true',
                         help='fix the student model in the communication game')
+    parser.add_argument('--n-supp-ref-games', type=int, default=10,
+                        help='number of supplementary ref games to sample \
+                        per training game (where new distractors are taken \
+                        from targets of games of different species)')
+    parser.add_argument('--include-supp-acc', action='store_true',
+                        help='include supp games when computing accuracy')
 
     # Argument post-processing
     args = parser.parse_args()
@@ -292,6 +310,8 @@ def make_kwargs(args, seed, model_id, other={}):
 
         'bn_student': args.bn_student,
 
+        'ablate_student_lang': args.ablate_student_lang,
+
         'h_dim_l_teacher': args.hidden_dim_l_teacher,
         'o_dim_l_teacher': args.output_dim_l_teacher,
         'd_prob_l_teacher': args.dropout_l_teacher,
@@ -323,8 +343,12 @@ def make_kwargs(args, seed, model_id, other={}):
         'comm_epochs': args.comm_epochs,
         'lemmatized': args.lemmatized,
         'datapaths': args.datapaths,
+        'ref_targets': args.ref_targets,
+        'concept_targets': args.concept_targets,
         'lr': args.lr,
         'fix_student': args.fix_student,
+        'n_supp_ref_games': args.n_supp_ref_games,
+        'include_supp_acc': args.include_supp_acc,
 
         **other
     }
@@ -403,6 +427,7 @@ def train(model, epoch, train_loader, optimizer, show_acc=False):
     if show_acc:
         acc = n_correct/n_total
         print("Accuracy: {:.2f}%".format(acc*100))
+        return loss_meter.avg, acc
     return loss_meter.avg
 
 
@@ -430,6 +455,7 @@ def val(model, val_loader, show_acc=False):
     if show_acc:
         acc = n_correct/n_total
         print("Accuracy: {:.2f}%".format(acc*100))
+        return loss_meter.avg, acc
     return loss_meter.avg
 
 def train_model(model, loaders, n_epochs, show_acc=False,
@@ -456,20 +482,33 @@ def train_model(model, loaders, n_epochs, show_acc=False,
     ### Losses format: epoch1_loss_train, ..., epochn_loss_train
     ###                epoch1_loss_val,   ..., epochn_loss_val
     losses = np.zeros((n_epochs, 2))
-    best_loss = 2^63 # arbitrary really large value
+    accs = np.zeros((n_epochs, 2))
+    best_loss = 2**63 # arbitrary really large value
     for epoch in range(1, n_epochs + 1):
         train_loader = loaders['train']
-        train_loss = train(model, epoch, train_loader, optimizer, 
-                           show_acc=show_acc)
+        if show_acc:
+            loss_train, acc_train = train(model, epoch, train_loader,
+                                          optimizer, show_acc=show_acc)
+        else:
+            loss_train = train(model, epoch, train_loader, optimizer, 
+                               show_acc=show_acc)
         val_loader = loaders['val']
-        val_loss = val(model, val_loader, show_acc=show_acc)
-        losses[epoch - 1, 0] = train_loss
-        losses[epoch - 1, 1] = val_loss
+        if show_acc:
+            loss_val, acc_val = val(model, val_loader, show_acc=show_acc)
+        else:
+            loss_val = val(model, val_loader, show_acc=show_acc)
 
-        if val_loss < best_loss:
-            best_loss = val_loss
+        losses[epoch - 1, 0] = loss_train
+        losses[epoch - 1, 1] = loss_val
+        accs[epoch-1, 0] = acc_train
+        accs[epoch-1, 1] = acc_val
+
+        if loss_val < best_loss:
+            best_loss = loss_val
             best = copy.deepcopy(model)
-
+    
+    if show_acc:
+        return losses, accs, best
     return losses, best
 
 def plot_losses(losses, dest):
@@ -500,12 +539,16 @@ if __name__ == "__main__":
             loaders, text_field = get_loaders(args.student_dsets)
             student = Student(text_field, **kwargs)
             for dset_num, dset in enumerate(args.student_dsets):
-                losses, best = train_model(student, loaders[dset],
+                losses, accs, best = train_model(student, loaders[dset],
                                            args.indiv_epochs[dset_num],
                                            **kwargs, show_acc=True)
                 dest = os.path.join(model_dir,
-                                    'teacher_{}_loss{}.png'.format(dset, dset_num))
+                                    'student_{}_loss_{}.png'.format(dset, dset_num))
                 plot_losses(losses, dest)
+                dest = os.path.join(model_dir,
+                                    'student_{}_acc_{}.png'.format(dset, dset_num))
+                plot_losses(accs, dest)
+                
         else:
             loaders, text_field = get_loaders(args.teacher_dsets)
             teacher = Teacher(text_field, **kwargs)
@@ -527,20 +570,23 @@ if __name__ == "__main__":
         if args.student_dsets:
             vocab_dsets = args.student_dsets
         else:
-            vocab_dsets = VALID_STUDENT_DATASETS
+            vocab_dsets = args.comm_dsets
         loaders, text_field = get_loaders(vocab_dsets)
         student = Student(text_field, **kwargs)
         print("====PRETRAINING STUDENT====")
         for dset_num, dset in enumerate(args.student_dsets):
-            losses, best = train_model(student, loaders[dset],
-                                       args.indiv_epochs[dset_num], **kwargs,
-                                       show_acc=True)
+            losses, accs, best = train_model(student, loaders[dset],
+                                             args.indiv_epochs[dset_num], 
+                                             show_acc=True, **kwargs)
             if args.use_best:
                 student = best
             # XXX this is kinda ugly (more like ugly as all get out)
             dest = os.path.join(model_dir, 
                                 'student_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
+            dest = os.path.join(model_dir,
+                                'student_{}_acc_{}.png'.format(dset, dset_num))
+            plot_losses(accs, dest)
         # Initialize teacher and pretrain it on the same datasets
         # (if pretrain_teacher is set to true)
         teacher = Teacher(text_field, **kwargs)
@@ -565,13 +611,17 @@ if __name__ == "__main__":
         comm = CommGame(teacher, student, **kwargs)
         print("====TRAINING COMMUNICATION GAME====")
         for dset_num, dset in enumerate(args.comm_dsets):
-            losses, best = train_model(comm, loaders[dset], 
-                                       args.comm_epochs[dset_num], **kwargs,
+            losses, accs, best = train_model(comm, loaders[dset], 
+                                       args.comm_epochs[dset_num], 
                                        show_acc=True, 
-                                       fix_comm_student=args.fix_student)
+                                       fix_comm_student=args.fix_student, 
+                                       **kwargs)
             dest = os.path.join(model_dir,
                                 'comm_{}_loss_{}.png'.format(dset, dset_num))
             plot_losses(losses, dest)
+            dest = os.path.join(model_dir,
+                                'comm_{}_acc_{}.png'.format(dset, dset_num))
+            plot_losses(accs, dest)
             dest = os.path.join(model_dir,
                                 'comm_{}_samples_{}'.format(dset, dset_num))
             output_samples_and_prototypes(teacher, loaders[dset], dest)

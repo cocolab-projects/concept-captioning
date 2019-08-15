@@ -60,17 +60,16 @@ class CommGame(nn.Module):
         # For each game, input the teacher sample and ref game to the student,
         # and get its classification loss (run this part with torch.no_grad())
         # XXX apparently can't use torch.no_grad() for this
-        with cm:
-            if n_ref_games > 0:
-                return self.compute_concept_loss(stims, labels, lang, 
-                                                 lang_lengths, n_ref_games)
-            else: 
-                inputs_clean = self.student.get_inputs(stims, batch.labels,
-                                                       lang, lang_lengths,
-                                                       onehot=True)
-                self.labels = inputs_clean[1]
-                return self.student.compute_loss_cleaned(*inputs_clean,
-                                                        onehot=True)
+        if n_ref_games > 0:
+            return self.compute_concept_loss(stims, labels, lang, 
+                                             lang_lengths, n_ref_games)
+        else: 
+            inputs_clean = self.student.get_inputs(stims, batch.labels,
+                                                   lang, lang_lengths,
+                                                   onehot=True)
+            self.labels = inputs_clean[1]
+            return self.student.compute_loss_cleaned(*inputs_clean,
+                                                    onehot=True)
 
     def compute_concept_loss(self, stims, labels, lang, lang_lengths, 
                              n_ref_games):

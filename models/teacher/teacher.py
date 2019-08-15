@@ -26,6 +26,7 @@ class Teacher(nn.Module):
         @param text_field: the torchtext field defining the vocab to be used.
         """
         super(Teacher, self).__init__()
+        self.count = 0
         
         self.decoder = RNNDecoder(text_field, **kwargs)
         ### Either way, stimModel outputs an embedded representation of the its inputs
@@ -110,6 +111,9 @@ class Teacher(nn.Module):
         pos_prototypes = pos_prototypes / n_pos.unsqueeze(1).expand_as(pos_prototypes) # same dimension
         n_neg = (1 - labels).sum(dim = 1)
         neg_prototypes = neg_prototypes / n_neg.unsqueeze(1).expand_as(pos_prototypes)
+        self.count += 1
+        if not self.count % 10:
+            print("Diff:", pos_prototypes[0][0:4]-neg_prototypes[0][0:4])
         return pos_prototypes, neg_prototypes
         
     def sample(self, stims, labels, greedy=False, train=False):
