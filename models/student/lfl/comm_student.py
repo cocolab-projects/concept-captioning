@@ -18,7 +18,8 @@ from utils.torch_utils import to_onehot
 
 import torchvision.models as models
 
-import json
+import pickle
+import numpy as np
 
 class Student(nn.Module):
     """ Student takes langauge as input, develops a representation of the language and
@@ -82,8 +83,11 @@ class Student(nn.Module):
 
         # Load all targets or positive stims for ref and concept games,
         # to allow train-time sampling of new ref/concept games
-        self.ref_targets = json.load(kwargs['ref_targets'])
-        self.concept_targets = json.load(kwargs['concept_targets'])
+        with open(kwargs['ref_targets'], 'rb') as ref_targets:
+            self.ref_targets = pickle.load(ref_targets)
+        # TODO implement concept targets + supp game sampling
+        # with open(kwargs['concept_targets'], 'rb') as concept_targets:
+        #     self.concept_targets = pickle.load(concept_targets)
         self.n_supp = kwargs['n_supp_ref_games']
 
         # Used for translating feature reps to animal type
@@ -93,6 +97,11 @@ class Student(nn.Module):
                                           [2]*12 + \
                                           [3]*18 + \
                                           [4]*20)
+        if self.cuda:
+            self.feat_to_creat = self.feat_to_creat.to('cuda')
+
+        self.is_eval = False
+        self.include_supp_acc = kwargs['include_supp_acc']
 
     def forward(self, lang, stims, lang_lengths, onehot=False):
         """ lang: language (describing concept)
@@ -120,6 +129,7 @@ class Student(nn.Module):
 
         logits = logits.view(-1, 3)
         loss = F.cross_entropy(logits, labels)
+        breakpoint()
         loss += self.compute_att_loss(alphas)
         return loss, logits
 
@@ -142,13 +152,21 @@ class Student(nn.Module):
         '''
         Computes accuracy of (for now, only) ref game predictions, stored in
         logits. Compares to self.labels, collected from last batch processed.
-        logits: (batch, 3)
+        logits: (batch*(self.n_supp+1), 3)
         self.labels: (batch)
         '''
         assert (logits.shape[0] == self.labels.shape[0]), \
                 "Logits and labels not of the same shape!"
+        if self.is_eval and not self.include_supp_acc:
+            # Only compute accuracy for original games
+            logits = logits.view(-1, self.n_supp+1, 3)
+            logits = logits[:, 0, :]
+            labels = self.labels.view(-1, self.n_supp+1)
+            labels = labels[:, 0]
+        else:
+            labels = self.labels
         preds = logits.argmax(1)
-        correct = preds == self.labels
+        correct = preds == labels
         n_correct = sum(correct).item()
         n_total = logits.shape[0]
         return n_correct, n_total
@@ -160,19 +178,27 @@ class Student(nn.Module):
                           batch.text[1], onehot=onehot)
 
     def get_inputs(self, stims, labels, lang, lang_lengths, onehot=False):
+        if self.cuda:
+            lang = lang.to('cuda')
+            lang_lengths = lang_lengths.to('cuda')
+            stims = stims.to('cuda')
+            labels = labels.to('cuda')
         # TODO throw an error if they try to use elmo?
         max_msg_size = lang.shape[1]
         # repeat all inputs 3 times for 3 stims, once for each ref game
         n_stims = 3*(1+self.n_supp)
         if onehot:
-            lang = lang.unsqueeze(1).expand(-1, n_stims, -1) 
-            lang = lang.view(-1, max_msg_size, lang.shape[2])
+            n_vocab = lang.shape[2]
+            lang = lang.unsqueeze(1).expand(-1, n_stims, -1, -1) 
+            lang = lang.contiguous().view(-1, max_msg_size, n_vocab)
         else:
-            lang = lang.unsqueeze(1).expand(-1, n_stims) 
-            lang = lang.view(-1, max_msg_size)
+            lang = lang.unsqueeze(1).expand(-1, n_stims, -1) 
+            # TODO does having to use contiguous() defeat the purpose of
+            # expand()?
+            lang = lang.contiguous().view(-1, max_msg_size)
 
         lang_lengths = lang_lengths.unsqueeze(1).expand(-1, n_stims)
-        lang_lengths = lang_lengths.view(-1)
+        lang_lengths = lang_lengths.contiguous().view(-1)
 
         # Flatten stims (one per row); used if ref games were generated in
         # communication game
@@ -182,18 +208,13 @@ class Student(nn.Module):
 
         # Generate stims for supplementary ref games
         if self.n_supp:
-            stims = add_sup_games(stims)
+            stims = self.add_supp_games(stims, labels)
 
         # Convert the one-hot labels into ints to use with cross-entropy
         labels = labels.argmax(1)
         # Repeat for each supplementary ref game
         labels = labels.unsqueeze(1).expand(-1, 1+self.n_supp)
-        labels = labels.view(-1)
-        if self.cuda:
-            lang = lang.to('cuda')
-            lang_lengths = lang_lengths.to('cuda')
-            stims = stims.to('cuda')
-            labels = labels.to('cuda')
+        labels = labels.contiguous().view(-1)
 
         # Store labels of this batch to later compute accuracy
         self.labels = labels
@@ -226,39 +247,48 @@ class Student(nn.Module):
         '''
         assert self.n_supp, "Should create a nonzero number of supp games!"
         n_feats = stims.shape[1]
-        breakpoint()
         # Get only targets by indexing into ref game stims by their labels
+        # TODO this only works for ref games; need to change this line
+        # and also use nonzero() instead of argmax below
         targets = stims.view(-1, 3, n_feats)
-        targets = labels.argmax(1).gather(targets, dim=1)
+        # Get the index of the target
+        labels = labels.argmax(1)
+        # In order to use gather, labels has to have the same size
+        # as targets
+        labels_expanded = labels.unsqueeze(1).unsqueeze(2)
+        labels_expanded = labels_expanded.expand(-1, 1, n_feats)
+        # gather syntax: (input (to be indexed into), dim, index)
+        targets = torch.gather(targets, 1, labels_expanded)
+        # targets shape: (batch, 1, n_feats)
         # Repeat once for each game
-        targets = targets.unsqueeze(1).expand(-1, self.n_supp, n_feats)
-        targets = targets.view(-1, n_feats) # (batch*(n_supp), 5)
+        targets = targets.expand(-1, self.n_supp, -1).contiguous()
+        targets = targets.view(-1, n_feats) # (batch*(n_supp), n_feats)
         # Get tensor of target types
         # Find index of last present feature, and determine which
         # animal range it's in
         target_types = targets.argmax(1)
-        target_types = self.feat_to_creat.index_select(target_types)
+        target_types = torch.gather(self.feat_to_creat, 0, target_types)
         target_types = to_onehot(target_types, n=5) # (batch, 5)
         # Get valid new animal types as all except the previous type
-        new_distrs = torch.ones(target_types) - target_types
+        new_distr_types = torch.ones(target_types.shape, device=target_types.device) - target_types
         # Duplicate once to get two distractors
-        new_distrs = new_distrs.unsqueeze(1).expand(-1, 2, -1)
+        new_distr_types = new_distr_types.unsqueeze(1).expand(-1, 2, -1).contiguous()
         # new_distrs shape: (batch*(n_supp), 2, 5)
-        new_distrs = new_distrs.view(-1, 5)
+        new_distr_types = new_distr_types.view(-1, 5)
         # Sample from new animal types
-        new_distrs = new_targets.multinomial(1).squeeze() # (batch*(n_supp))
+        new_distr_types = new_distr_types.multinomial(1).squeeze() # (batch*(n_supp))
         # new_targets is now the index of the animal types to be used
-        
+        new_distrs = torch.zeros([new_distr_types.shape[0], n_feats], device=new_distr_types.device)
         # TODO convert this to torch magic
-        for distr_type_idx, creat_type in enumerate(new_distrs):
+        for distr_type_idx, creat_type in enumerate(new_distr_types):
             if ref:
                 n_poss = len(self.ref_targets[creat_type])
-                distr_idx = np.randrange(n_poss)
-                new_distrs[distr_type_idx] = self.ref_targets[distr_idx]
+                distr_idx = np.random.randint(n_poss)
+                new_distrs[distr_type_idx] = self.ref_targets[creat_type][distr_idx]
             else:
                 n_poss = len(self.concept_targets[creat_type])
-                distr_idx = np.randrange(n_poss)
-                new_distrs[distr_type_idx] = self.concept_targets[distr_idx]
+                distr_idx = np.random.randint(n_poss)
+                new_distrs[distr_type_idx] = self.concept_targets[creat_type][distr_idx]
         # new_distrs is now actual stimulus feature representations
         # shape: (batch*2*(n_supp), n_feats)
         # Now undo the flattening of the two distractors
@@ -266,11 +296,19 @@ class Student(nn.Module):
         # Cat the original targets with the new distractors to produce the
         # supp games
         targets.unsqueeze_(1)
-        new_games = torch.cat(targets, new_distrs, dim=1) 
+        new_games = torch.cat([targets, new_distrs], dim=1) 
         # shape: (batch*n_supp, 3, n_feats)
         # Now combine with the original games
         new_games = new_games.view(-1, 3*self.n_supp, n_feats)
         stims = stims.view(-1, 3, n_feats)
-        stims = torch.cat(stims, new_games, dim=1)
+        stims = torch.cat([stims, new_games], dim=1)
         stims = stims.view(-1, n_feats) # (batch*3*(1+n_supp), n_feats)
         return stims
+
+    def eval(self):
+        super().eval()
+        self.is_eval = True
+
+    def train(self, is_train=True):
+        super().train(is_train)
+        self.is_eval = False

@@ -42,6 +42,8 @@ DEFAULT_DATAPATHS = dict(unique_concept='./data/concept/{}/vectorized/unique_con
                          concept='./data/concept/{}/vectorized/concept_dataset.tsv',
                          ref = './data/reference/pilot_coll1/{}/vectorized/ref_dataset.tsv')
 DEFAULT_B_SIZES = dict(unique_concept=12, concept=32, ref=32)
+REF_TARGETS = './data/reference/pilot_coll1/train/vectorized/targets.pkl'
+CONCEPT_TARGETS = './data/concept/train/vectorized/targets.pkl'
 
 
 def parse_args():
@@ -143,7 +145,7 @@ def parse_args():
     parser.add_argument('--ref-targets', type=str, default=REF_TARGETS,
                         help='path to list of train ref game targets')
 
-    parser.add_argument('--concept-pos-stims', type=str, 
+    parser.add_argument('--concept-targets', type=str, 
                         default=CONCEPT_TARGETS,
                         help='path to list of positive concept game stims')
     parser.add_argument('--indiv-bsizes', type=ast.literal_eval, 
@@ -187,10 +189,12 @@ def parse_args():
                         help='stop training on each dset early (default True)')
     parser.add_argument('--fix-student', action='store_true',
                         help='fix the student model in the communication game')
-    parser.add_argument('n-supp-ref-games', type=int, default=10,
+    parser.add_argument('--n-supp-ref-games', type=int, default=10,
                         help='number of supplementary ref games to sample \
                         per training game (where new distractors are taken \
                         from targets of games of different species)')
+    parser.add_argument('--include-supp-acc', action='store_true',
+                        help='include supp games when computing accuracy')
 
     # Argument post-processing
     args = parser.parse_args()
@@ -340,10 +344,11 @@ def make_kwargs(args, seed, model_id, other={}):
         'lemmatized': args.lemmatized,
         'datapaths': args.datapaths,
         'ref_targets': args.ref_targets,
-        'concept_targets': args.concept_pos_stims,
+        'concept_targets': args.concept_targets,
         'lr': args.lr,
         'fix_student': args.fix_student,
         'n_supp_ref_games': args.n_supp_ref_games,
+        'include_supp_acc': args.include_supp_acc,
 
         **other
     }
@@ -565,7 +570,7 @@ if __name__ == "__main__":
         if args.student_dsets:
             vocab_dsets = args.student_dsets
         else:
-            vocab_dsets = VALID_STUDENT_DATASETS
+            vocab_dsets = args.comm_dsets
         loaders, text_field = get_loaders(vocab_dsets)
         student = Student(text_field, **kwargs)
         print("====PRETRAINING STUDENT====")
