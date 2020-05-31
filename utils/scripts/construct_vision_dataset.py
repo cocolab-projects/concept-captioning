@@ -60,7 +60,7 @@ class ReferenceDataset():
     """ Generate datasets for Reference games.
     """
     @staticmethod
-    def construct_dataset(data_dir):
+    def construct_dataset(data_dir, speaker_only=False):
         """ Construct dataset of concatenated informative message, target (image),
             distractor 1 (image), distractor 2 (image) and 2 outputs (gold truth, listener selection).
         """
@@ -68,6 +68,8 @@ class ReferenceDataset():
         for d in dirs:
             msgs = pd.read_csv(os.path.join(d, 'msgs.tsv'), sep='\t')
             msgs['example_id'] = msgs.apply (lambda row: hash(str(row['trialNum']) + row['gameid']), axis=1)
+            if speaker_only:
+                msgs = msgs[msgs['sender'] == 'speaker']
             group = msgs.groupby(['example_id'])
             concat_msgs = pd.DataFrame(group['message'].apply(' '.join))
             concat_msgs = concat_msgs.reset_index()
@@ -103,7 +105,7 @@ def main():
     # concept_dataset = ConceptDataset()
     # concept_dataset.construct_dataset()
     ref_dataset = ReferenceDataset()
-    ref_dataset.construct_dataset('pilot_coll1')
+    ref_dataset.construct_dataset('pilot_coll1', speaker_only=True)
 
 if __name__ == '__main__':
     main()

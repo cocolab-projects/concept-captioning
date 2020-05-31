@@ -4,7 +4,7 @@ example_id	message
 -9204851343635223066	grey flowers-white stem
 -9202238723247398987	green trunk, no leaves, purple dots
 -9197282005935643905	white stem, orange petals, white center
--9193539333995638419	WHITE STEM ORANGE CENTER what color flowers?
+-9193539333995638419	WHITE STEM ORANGE CENTER
 -9185935401942960540	purple wing
 -9157807578533136414	Click the one with an orange stem/trunk
 -9149299906006183698	orange wing, white tail feathers
@@ -14,8 +14,8 @@ example_id	message
 -9057976653923251870	3
 -9057165157597767557	all white
 -9056845506380558692	orange trunk
--9035973038975044342	The one with only orange piece of hair with one piece of orange hair? it's the one with no tail and one piece of orange hair
--9019886966791823736	the fish doesn't contain mustache is the body purple yes
+-9035973038975044342	The one with only orange piece of hair it's the one with no tail and one piece of orange hair
+-9019886966791823736	the fish doesn't contain mustache yes
 -9012843864737159999	pick the critter with pink center and orange petals
 -9004555610377047328	pink stripes white body
 -8994342714973290225	orange stem and orange bulbs
@@ -43,7 +43,7 @@ example_id	message
 -8758060703681338313	white stem white petals
 -8748881947815963847	all purple body white wing and white lower feathers
 -8742138513736871081	red plant/leaves pink berries
--8739158464557947226	hi hi hey which one do you see as the target/ ? Are you there?
+-8739158464557947226	hi hi
 -8722118630326300845	white wings orange body
 -8713928572767634581	wh with pur stripes
 -8701960279550108072	white stem, green fruit, red leaf
@@ -62,7 +62,7 @@ example_id	message
 -8558315694267978294	Click the one that has purple leaves and purple berries
 -8544379611377033763	white hands and antenna 
 -8522172471799894032	orange body white stripes
--8520024837404628230	green dots blue leaves you're doing awesome =) thanks you too
+-8520024837404628230	green dots blue leaves thanks you too
 -8513852678577630123	has no white
 -8498369636044246379	Flower, white stem with thorns, purple tendrils, two shades of orange in flower head with white center and spots~~~
 -8477309548806155688	orange wings, white legs and body, pink head and attenae
@@ -110,7 +110,7 @@ example_id	message
 -7805240537009020946	blue petals
 -7785276809227903986	pink with yellow stripes
 -7736387347390999708	all white body/head, no wings
--7696216875344747779	brown fish with whiskers purple srtipes? nope
+-7696216875344747779	brown fish with whiskers nope
 -7631699661451467782	orange body pink stripe
 -7619464702078131467	all pink one
 -7576618220618893219	white with purple fin
@@ -157,13 +157,13 @@ example_id	message
 -6685176440982920048	blue friut, blue leaf
 -6658273507855959398	orange stem, white center
 -6655964615937331922	white stem with spikey things
--6646404770306197524	no teeth with model and orange white or purple stripes? white
+-6646404770306197524	no teeth with model and orange white
 -6628424480086956293	it has a red stem, and pink buds
 -6597861223251930528	orange berries red leaves
 -6596299627024846213	white head pink legs
 -6578507028666495901	White stem yellow center
 -6567413968556543685	white body purple wing orange feathers
--6555564061532646728	the flower contain same color flower contain same purple color is the center orange no
+-6555564061532646728	the flower contain same color flower contain same purple color no
 -6549678881829864199	the tail is purple and bird doesn't any color
 -6537738947989612332	orange fish no line or no stripes
 -6520717147386579493	completely white fish
@@ -179,12 +179,12 @@ example_id	message
 -6397866905277632702	has pink on the petals and the middle is orange, the rest is all white
 -6393893911011615028	purple wings, yellow legs
 -6391480920662086742	pink legs, orange body, white head and attenae No wings
--6386299327276435751	White fish, purple stripes, orange fins~~~ No fangs~~~ I don't see fangs, two of them look identical~~~ Can you describe anything else? They all have whiskers, but one has a large fang in front of the whiskers~~~~~~~~~you can't see that? No The pictures stop at the tip of the nose~~~ I might get this one wrong~~~
+-6386299327276435751	White fish, purple stripes, orange fins~~~ No fangs~~~ They all have whiskers, but one has a large fang in front of the whiskers~~~~~~~~~you can't see that?
 -6382513993087778778	blue leaves, white seeds, brown stalk
 -6380320821448509074	Click the one with green berries and NO leaves~~~
 -6376222237627898177	it has antennas and a purple back, no wings
 -6346062646772294705	all orange except for yellow beak and pink wing
--6345865648355052502	the flower is in center  is the flower all one color does the flower and center have the same color the flower contain all color
+-6345865648355052502	the flower is in center  the flower contain all color
 -6306763957704467040	the bird in orange color and doesn't contain wings but it have tails
 -6305582073254413708	choose orange tail feathers
 -6294935483478921946	orange stem flower with white center dot orange petals too sorry
@@ -225,7 +225,7 @@ example_id	message
 -5653857435660335720	white stem, purple petal
 -5606272737177514396	Orange, no stripes
 -5575333103549501646	solid white
--5563030325727363748	the bird look different comparing the other birds what is the color of the feathers the feathers contain no color is there a small portion of the wing orange no the bird is purple and the feathers contain no color
+-5563030325727363748	the bird look different comparing the other birds the feathers contain no color no the bird is purple and the feathers contain no color
 -5534405702438023061	purple petals orange center
 -5528639305420233438	all orange, no head feathers
 -5506657921742675518	no leaves blue dots green vase
@@ -300,7 +300,7 @@ example_id	message
 -4504737099985429003	orange wings no feathers
 -4495463340231738161	white center white petals
 -4489931838099577763	orange head, the rest is purple
--4470982200116797396	all white fish with whiskers  if you type faster, we can get a higher bonus
+-4470982200116797396	all white fish with whiskers 
 -4449828498511720234	ORANGE LEGS NO WINGS
 -4444912795413168747	the one with whiskers but no stripes
 -4420516347260684050	completely white fish
@@ -325,7 +325,7 @@ example_id	message
 -4138734761441394786	white body, no stripes or fang pink body*
 -4119827152888455526	white leaves
 -4116525443917982230	pink center, white petals  
--4075834985526161581	all purple with whisker i dont have one with a whisker fang? not the white one nope i have two that look exactly the same~~~ all purple and one purple and white pick the purple one
+-4075834985526161581	all purple with whisker fang? not the white one pick the purple one
 -4066476150389152190	The one with white heat and 8 legs white head
 -4066168401396730247	pur-no strip
 -4064240467034587444	Solid yellow body
@@ -379,7 +379,7 @@ example_id	message
 -3492941298878973358	threee pink stripes, the rest orange
 -3481359746456855757	the one with  only green dots
 -3464643187545381870	white leaves, no berries 
--3460837876142936530	purple body back fin orange and little fin whiskers? no whiskers top fin is orange and the little one
+-3460837876142936530	purple body back fin orange and little fin no whiskers top fin is orange and the little one
 -3443422668454290137	Click the one that has white wings and purple antennas
 -3440714478712124670	purple middle of flower
 -3436825357436970385	Tree with orange trunk, orange leaves, blue berries~~~
@@ -403,7 +403,7 @@ example_id	message
 -3133009845750619934	no stripes
 -3103343368743098423	purple body with yellow stripes
 -3090324103881956291	he has stripes and whiskers white body, yellow stripes
--3084226161070978417	Sorry its ok White stem white center
+-3084226161070978417	Sorry White stem white center
 -3072868343718517981	no wings and antenna
 -3047487376579770405	orange body, pink stripes
 -3040311502111868671	Bald all purple bird with tail feathers~~~
@@ -416,7 +416,7 @@ example_id	message
 -2933389532094677505	white petals
 -2915603872909089568	white butterfly wings and white bottomish area with purple legs
 -2910468594824628149	no stripes on body
--2890342123065248215	the bubble is in blue color and stem is red color got it
+-2890342123065248215	the bubble is in blue color and stem is red color
 -2883669406912537235	The one with white dots
 -2874719961988365066	flower contain no color at center and it have thorn
 -2813022270148552719	choose orange wing with white feathers
@@ -425,7 +425,7 @@ example_id	message
 -2756250797429387087	purple with white stripes no fangs
 -2752498628973013743	all pink body
 -2736449784862314324	orange wings
--2735966558052290076	why am I always the speaker lol it's usually me! pink body orange hands no wings
+-2735966558052290076	why am I always the speaker pink body orange hands no wings
 -2726391693026965576	white fang no stripes
 -2691058589981576759	yellow leaves wth green berries and blue trunk
 -2682947645994777336	orange body and whiskers AND fangs
@@ -433,7 +433,6 @@ example_id	message
 -2654852045980249664	yellow feathers on top pink wing
 -2649155452409292178	green only
 -2629749332973453588	yellow feathers, white wing
--2612307743301201177	tell me something to find
 -2610736167557130370	all purple fish with white fang
 -2605990435435600402	brown head butterfly, white wings, purple antennae
 -2589487561055967796	it has spike with purple color~~~
@@ -457,12 +456,12 @@ example_id	message
 -2436748657031277715	white body white wings
 -2426440239496538366	white-no stripes
 -2388898220572162868	orange wings and purple antenna 
--2371578249017584837	no head feathers The last fish had a tooth~~~
+-2371578249017584837	no head feathers
 -2368294151669208557	Orange fish with fang and orange stripes, no whiskers~~~
 -2361899535362089005	white wings and antenna
 -2358576421923097830	white abdomen, purple head and purple antennae
 -2354456986766154595	Purple tail
--2344114053502404258	pink body, orange stripes, and guess the rest It will be interesting to see if your fish have no mouth Mine have a mouth and one has a tooth~~~
+-2344114053502404258	pink body, orange stripes, and guess the rest It will be interesting to see if your fish have no mouth
 -2333016072414791973	orange stripe
 -2318247421059256473	completely purple with whiskers
 -2316907018244350572	white base, no petals, white dots
@@ -494,7 +493,7 @@ example_id	message
 -1775027267512831475	blue leaves and green circles with white stalk
 -1774645599438094047	no wings
 -1760818652818392497	orange leaves and pink center
--1703875722739136039	1 im clicking your numbers but they aren't right
+-1703875722739136039	1
 -1695054357300462517	it has red flowers, but no orange buds
 -1692843129102810115	orange body, has antenna
 -1647092489883043780	white wings/body/legs
@@ -505,7 +504,7 @@ example_id	message
 -1555733743946181166	purple and white, no orange
 -1552151414145468814	purple flowers, white stem
 -1495646427810051249	white body, wings, and legs
--1484085610842976050	there are red leaves with swirly branches that have white berries on them  none have white berries what do you see then  no berries, pink berries, orange berries the light pink berries sounds right 
+-1484085610842976050	there are red leaves with swirly branches that have white berries on them  what do you see then  the light pink berries sounds right 
 -1469305805384339084	pink body, pink mouth strings, white feather
 -1465738435512935875	plain white body
 -1462065629983917628	orange head and wings
@@ -520,7 +519,7 @@ example_id	message
 -1356139399277019759	purple head and white antenna
 -1351622264518948822	Click the one that is a purple fish with something coming out of it's mouth
 -1349364270540393444	blue stem with red and white
--1297940253561600253	the insect contain no color and mustache also same color and it doesnot have wings is the mustache purple yes yes
+-1297940253561600253	the insect contain no color and mustache also same color and it doesnot have wings yes yes
 -1248901083044228873	This one has no tail feathers
 -1241879547328016269	green trunk with white leaves
 -1229488540768797761	orange leaves, white center
@@ -538,7 +537,7 @@ example_id	message
 -987098734899001221	purple head orange body
 -939476507042587468	White body, white legs
 -932447420441589968	orange base, orange dots, no pink or white
--932098361204899832	This has pink stripes and again the mouth is cut off Weird~~~ 
+-932098361204899832	This has pink stripes and again the mouth is cut off
 -891921101262540280	white tail orange wing
 -889573606102171838	white antennae orange wings
 -852916771001658945	blue leaves no berries red plant
@@ -562,10 +561,10 @@ example_id	message
 -664578245685718106	no wings, no antennae
 -663253069978044628	white fish no color in the stripes
 -661013746739956953	purple stripes
--658248887630391322	blue trunk and no leaves ok thanks I think I got it
+-658248887630391322	blue trunk and no leaves
 -643894860127407654	White wings
 -580640977555277301	orange hair except for one piece of hair under the eyes is pink
--568108672835640049	sorry s' ok white center leaves purple i am braindead from those memento hits, lol hahaha
+-568108672835640049	sorry white center leaves purple hahaha
 -522163623211003162	Notice the yellow stem
 -514088779245532945	blue-red-white
 -493720914146452468	Orange petals, no spikes on stem
@@ -582,7 +581,7 @@ example_id	message
 -327463879067608548	green stalk, blue leaves and berries
 -309884525307647647	orange base, red petals, white dots
 -303765191676698039	red petals
--199461435756389603	3 it isnt ordered the same for us i think 1
+-199461435756389603	3 1
 -197609027465756452	Click the one that is a purple flower and has a white stem
 -182031124692870125	orange wings and purple antenna
 -172344950061246307	pink trunk
@@ -630,7 +629,7 @@ example_id	message
 415152244753834737	Orange vase, red petals
 418313066024326727	pink feathers none on bottom
 423174566663961697	pink base, white petals, pink dots, no orange
-438369604110125973	insect is purple and wings doesn't contain color hello not sure on this one as the feet are purple and wings are purple feet ate purple wings doesn't contain any color
+438369604110125973	insect is purple and wings doesn't contain color hello feet ate purple wings doesn't contain any color
 441035185221352866	Click the one that has big wings and white legs
 500303415680249237	orange leafs
 502657606772584935	no color in the trunk of the tree, lavendar leaves
@@ -680,7 +679,7 @@ example_id	message
 1081618770273605849	golden 
 1089005229819191678	thorny stem white leaves
 1114657084552032021	orange everything except white center and white dots
-1115184582746041698	orange body, pink legs, white head and attenae No wings? no wings
+1115184582746041698	orange body, pink legs, white head and attenae no wings
 1131328857527716041	Bug with purple body and head, orange legs, white antenna~~~
 1159027273894461229	insect contain mustache and in purple color
 1185730138912827468	white and orange
@@ -735,7 +734,7 @@ example_id	message
 1965459855223629946	white wings, purple attena
 1975186732175024320	completely white body with orange butterfly wings
 1989731169549400576	pink stem, orange center, pink petals
-1992030219163718235	this is one of the two that look alike~~~ There is no difference between them One has a long white tooth and one doesn't~~~ Which one do you see? My picture is cut off~~~ I see no mouth at all~~~ I don't know if this is on purpose or is mine messed up? Eek~~~ I'm thinking it's messed up~~~ I will click one and see if it gets better for you~~~ 
+1992030219163718235	this is one of the two that look alike~~~ There is no difference between them My picture is cut off~~~ I see no mouth at all~~~ I don't know if this is on purpose or is mine messed up?
 2025880855401624646	Click the one with white head feathers
 2026029003138555387	Tree, red trunk, purple berries, green leaves~~~
 2044155280161651845	orange wing, no feathers around head
@@ -767,7 +766,7 @@ example_id	message
 2566063488766829155	ORANGE AND WHITE STRIP FISH
 2569369526691568232	Click the one with a white body and orange legs
 2569598060001095167	yellow stem, pink fruit, green leaf
-2571550317109713326	hi hello there is a tree with green and purple and orange more pink
+2571550317109713326	hi there is a tree with green and purple and orange more pink
 2578385608480907456	it has combination of color~~~
 2594998488020333257	white antennas with yellow legs
 2602129991253678516	Red base and blue dots With pink petals
@@ -844,13 +843,13 @@ example_id	message
 3581433969915321460	only purple ~~~
 3583890021102254261	Purple head, white antennae
 3584135931603912643	white leaves
-3599315390339904348	difficult yep white stem? yes ok, orange center? no I see ok
-3705442344524144423	Orange stem and white dots what color flowers? Red leaves
+3599315390339904348	difficult yes no I see
+3705442344524144423	Orange stem and white dots Red leaves
 3707057800118954140	white petals and white stem
 3733182830861717869	Purple flower with orange stem
 3739895044083753593	orange berries, no leaves
 3765925623011420517	has wings and atenna
-3776083891783707183	pink leaves and pink berries with pink trunk  no pink berries red?
+3776083891783707183	pink leaves and pink berries with pink trunk  red?
 3785215977936036326	flower with green stem and white dots
 3812003317188705979	do you have one with blue leaves and orange berries 
 3812960856845595963	orange stem, orange middle
@@ -904,7 +903,7 @@ example_id	message
 4584282589292834413	no tail feathers, whte head feathers
 4586536441234055275	purple antenna orange body
 4590685449830512482	red dots pink vase
-4602347355085298009	the fish contain all color  are the stripes purple and the body orange hello yes
+4602347355085298009	the fish contain all color  yes
 4608224758827537571	white stem, flower ALL orange
 4623429814269627067	white petals and yellow stem
 4625396088304209244	white and orange no purple
@@ -944,7 +943,7 @@ example_id	message
 5111999890786122561	all purple 
 5131499870431330854	red flowers, purple circles
 5135642122875848885	white fish
-5139532104843520713	hi hey white stem and purple color flower
+5139532104843520713	hi white stem and purple color flower
 5159155409054286219	pink center, white petals with orange dots
 5191017756669209239	all orange except one white wing
 5214440927052845280	red leaves and berries
@@ -953,7 +952,7 @@ example_id	message
 5221697415615793323	purple fish with no stripes
 5269859006602737477	the fish contain all color
 5289545942111568696	Click the one with a white head and antennas
-5302986388746299577	hi hi white wings
+5302986388746299577	hi white wings
 5331010218017941788	purple stripe w/o string
 5333053187644753122	red dots pink leaves
 5342865236895057218	orange petals with no dots
@@ -1015,7 +1014,7 @@ example_id	message
 6027646497590868887	purple flower, brown stalk with brown circle
 6065707495405560556	1
 6072967282696922064	white fish without color
-6084385355488322449	I think I screwed that one up, sorry! pink body no stripes I thought I got the bonus on the last one~~~
+6084385355488322449	I think I screwed that one up, sorry! pink body no stripes
 6104519679622296432	pink body fish, yellow top fin, whiskers no stripes
 6109524659181678650	no feathers on head orange wing
 6121823913050192417	pink tail
@@ -1031,7 +1030,7 @@ example_id	message
 6192895476825304311	green leaves
 6240819540231068823	orange wing
 6243360997580295924	pink wing, white head feathers
-6279799847583682169	hi so i see a purple flower with an orange dot in the middle hello? hi
+6279799847583682169	hi so i see a purple flower with an orange dot in the middle hello?
 6284657666404293498	The center is orange and the leaves are gray
 6291326749579697797	Click the one that has white leaves and a purple center
 6293520712187160040	it is one of the orange fish, but they look exactly the same to me~~~ if one looks a bit larger, try that one!
@@ -1052,7 +1051,7 @@ example_id	message
 6434246811787967785	orange stalk, center circle is pink
 6449273995289132938	pink stem with purple leaves
 6459167476010246061	purple wing, no bottom
-6464425525576228703	a ll orange flower all orange trunk? yes
+6464425525576228703	a ll orange flower all yes
 6490620073190687549	orange with white whisker looking thing by mouth
 6511127557454889086	orange flower white middle
 6517362027211284480	orange body purple feathers no bottom feathers
@@ -1078,13 +1077,13 @@ example_id	message
 6958518892398253143	middle
 6965559238718916975	w/o wings, head , legs yellow
 6969581287058639310	Orange stem and orange dot in the middle of the flower
-6975314248424877364	purple and white fish  Fang? you suck at this cant see it here
+6975314248424877364	purple and white fish  cant see it here
 7029680991905608784	no tail pink wings
 7030397446655173763	all purple
 7038681078472392787	Only orange and white
 7057738245075760199	pink steam , orange petals
 7066788906384754299	brown leaves and blue seeds with purple stalk
-7109661629789101456	orange stem thanks! thank you too!
+7109661629789101456	orange stem thanks!
 7153973458775034387	everything is orange except the middle of the flowers and some pink dots on the petals
 7163622036973317565	orange stem, white circles, green flowers
 7172035594780209951	solid orange fish
@@ -1125,7 +1124,7 @@ example_id	message
 7593763609376131886	white vase no leaves
 7621249120031459456	white body, yellow head
 7631406299204971025	it is an orange flower but does NOT have thorns
-7635298615757296805	hi hello target is green leaves and blue stem
+7635298615757296805	hi target is green leaves and blue stem
 7641863409043456654	white center, white stem
 7645636800802681721	white stem and purple leaves
 7655711184243260574	there is a blue trunk and green circles in the tree
@@ -1133,7 +1132,7 @@ example_id	message
 7676887094252174950	purple wing and no tail
 7679934703881717839	orange and pink body 
 7690249797171977733	solid orange body and whiskers
-7698151930723402642	the feather contain fully orange color  does it have a tail that is orange YES
+7698151930723402642	the feather contain fully orange color  YES
 7699892134088706629	blue berries green trunk
 7708855704462992157	Fish with purple fins and no whiskers~~~
 7710921231495960666	white wings, pink legs
@@ -1143,7 +1142,7 @@ example_id	message
 7791518459380891208	Yellow legs and white wings
 7804794893774239391	purple stem blue petals
 7811452533835403612	purple wing no tail feathers
-7838471450704235410	all pink body and head  with yellow antenna when this is done, calibrate the colors of your monitor
+7838471450704235410	all pink body and head  with yellow antenna
 7840369721626687899	white body, legs and wings yellow
 7858551163680629378	white head pink legs
 7865483392779197268	white leaves, blue berries, green trunk

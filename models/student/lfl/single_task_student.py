@@ -44,22 +44,32 @@ class SingleTaskStudent(nn.Module):
         else:
             raise Exception('Invalid Language Model')
         
+        ### Either way, stimModel outputs an embedded representation of the its inputs
         if kwargs['stim_model_type'] == 'featureMLP':
+            ### Indicates that we're using vectorized features
+            ### Note that MLP is defined manually
             self.stimModel = MLP(
+                ### Input, hidden and output dimensions
                 i_dim=kwargs['i_dim_s'],
                 h_dim=kwargs['h_dim_s'],
                 o_dim=kwargs['o_dim_s'],
+                ### Dropout probability for dropout layers
                 d_prob=kwargs['d_prob_s'],
+                ### Whether or not to use batch normalization, where node activations are normalized by the batch mean and SD
+                ### This can mitigate negative effects on training speed of high variability of internal activations
                 batch_norm=kwargs['batch_norm'],
                 num_layers=kwargs['num_layers_s'],
             )
         elif kwargs['stim_model_type'] == 'resnet':
+            ### Indicates that we're using images; resnet (residual neural network) is a CNN
             self.stimModel = models.resnet18(pretrained=kwargs['pretrained'])
             self.stimModel.fc = nn.Linear(512, kwargs['o_dim_s'])
 
         else:
             raise Exception('Invalid Stimulus Model')
             
+        ### MLP to go from language rep + stimulus rep to probability that 
+        ### the concept description applies to the stimulus
         self.mlp = MLP(
             i_dim=kwargs['o_dim_l'] + kwargs['o_dim_s'],
             h_dim=kwargs['hidden_dim_student'],
@@ -76,6 +86,8 @@ class SingleTaskStudent(nn.Module):
         """
         languageRep, alphas = self.languageModel(x1, x1_lengths)
         stimRep = self.stimModel(x2)
-        joinedRep = torch.cat([languageRep, stimRep], dim=1)
+        joinedRep = torch.cat([languageRep, stimRep], dim=1) 
+        ### above, dim is the concatenating dimension;
+        ### in this case, dim 0 is likely batches, so dim 1 is the reps themselves
         logits = self.mlp(joinedRep)
         return logits, alphas

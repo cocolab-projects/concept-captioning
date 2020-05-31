@@ -92,25 +92,39 @@ if __name__ == "__main__":
                         help='enables CUDA training')
     args = parser.parse_args()
     args.cuda = args.cuda and torch.cuda.is_available()
+    print(torch.cuda.is_available())
+    print(args.cuda)
 
     # Model IDs
+    ### Note: stored in repo/saves/model_ids
+    ### Models are stored in repo/saves/models, in folders with their id as the name
+    ### TODO what is the .pkl file that they use? RESOLVED apparently it's a pickle file, so like a stored python object
+    ### So (trained/untrained?) models are just objects
     model_id = str(uuid.uuid4())
     model_ids_dir = os.path.join(args.out_dir, 'model_ids')
     if not os.path.isdir(model_ids_dir):
         os.makedirs(model_ids_dir)  
 
     # Set seeds
+    ### Sets all RNG seeds with some fixed value
     set_seeds()
 
+    ### Makes folder to put models in
     args.out_dir = os.path.join(args.out_dir, 'models')
     if not os.path.isdir(os.path.join(args.out_dir, model_id)):
         os.makedirs(os.path.join(args.out_dir, model_id))
 
     # Construct Data Loaders &  Iterators
+    ### Default args.data is /data/concept/{}/vectorized/concat_informative_dataset.tsv, whatever that is
+    ### (.tsv is just tab-separated-value, i.e. like csv, so just a table)
+    ### The actual '{}' folders are (raw; maybe not used here), test, train and val
+    ### {} is a place to put the str.format() string, like % in C, so it's replaced by test, train and val in load_dataset
+    ### {}_data is a TabularDataset (torchtext.data object)
     train_data, val_data, test_data, fields, stim_fields = load_dataset(args.data)
     sort_key = lambda x: len(x.text)
     if args.cuda:
         # GPU available
+        ### data is torchtext.data
         train_loader, val_loader = data.Iterator.splits(
                 (train_data, val_data), sort_key=sort_key, sort_within_batch=True,
                 batch_sizes=(args.batch_size, args.batch_size), device=torch.device('cuda'))
@@ -213,6 +227,8 @@ if __name__ == "__main__":
     def train(epoch=-1, backprop=True):
         """ Train model for a single epoch.
         """
+        ### Model is declared in global space 
+        ### (although after this function, which is allowed, I guess?)
         # Data loading & progress visualization
         loss_meter = AverageMeter()
         acc_meter = AccuracyMeter()
@@ -220,8 +236,11 @@ if __name__ == "__main__":
         train_loader.init_epoch()
         
         if backprop:
+            ### Sets model in training mode
             student.train()
         else:
+            ### Sets model in evaluation mode
+            ### (This is never used in code, i.e. backprop is always true)
             student.eval()
 
         for batch_idx, batch in enumerate(train_loader):
@@ -271,7 +290,10 @@ if __name__ == "__main__":
         return loss_meter.avg, acc_meter
 
     # Model Training
+    ### Setting the seeds again for some reason?
     set_seeds()
+    ### Student is the model we're training
+    ### Kwargs is a dictionary of variables declared above
     student = SingleTaskStudent(**kwargs)
     kwargs.pop('concept_vocab_field', None) # remove vocab_field, as it is not serializable
     if args.cuda:
@@ -280,11 +302,14 @@ if __name__ == "__main__":
 
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
+    ### This seaborn graph not used?
     import seaborn as sns
     sns.set_style('whitegrid')
 
     best_acc = 0.0
     best_epoch = -1
+    ### Losses format: epoch1_loss_train, ..., epochn_loss_train
+    ###                epoch1_loss_val,   ..., epochn_loss_val
     losses = np.zeros((args.epochs, 2))
     for epoch in range(1, args.epochs + 1):
         train_loss = train(epoch)
